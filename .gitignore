@@ -1,1 +1,3 @@
 *.swp
+*.pyc
+models/bvlc_alexnet.npy
