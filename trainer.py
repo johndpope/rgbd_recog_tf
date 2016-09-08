@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import single_channel_model as model1
-import os, sys, ipdb
+import os, sys, time, ipdb
 from utils import common
 import configure as cfg 
 
@@ -76,14 +76,18 @@ def run_training():
     # start the training loop
     for step in range(FLAGS.max_iter):
         # training phase
-        #rgb_paths, dep_paths, labels = common.get_paths_labels(cfg.DIR_DATA, train_lst, cfg.CLASSES, to_shuffle=True)
+        start_time = time.time()
         np.random.shuffle(train_lst)
 
         batch_idx = 0
         while batch_idx != -1:
             fd, batch_idx = fill_feed_dict(train_lst, batch_idx, images_ph, labels_ph, 
                 use_rbg=True, use_dep=False)
-            #train
+            _, loss_value = sess.run([train_op, loss], feed_dict=fd)
+            ipdb.set_trace()
+
+        duration = time.time() - start_time
+
 
         # evaluation phase
     return
