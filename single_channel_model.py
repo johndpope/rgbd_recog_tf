@@ -137,6 +137,13 @@ def inference(images, net_data, is_training):
 
 def loss(prob, labels):
     """Return the loss as categorical cross-entropy
+
+    Args:
+        prob: probability from inference
+        labels: binary sequence, where 1 means the correct class, 0 otherwise
+
+    Returns:
+        loss: categorical crossentropy loss
     """
     if labels.get_shape()[0].value is not None:
         loss = -tf.reduce_sum(labels * tf.log(prob), reduction_indices=1, name='loss')

@@ -3,7 +3,7 @@ import numpy as np
 import single_channel_model as model1
 import os, sys, ipdb
 from utils import common
-import configure as cfg #TODO: change accordingly 
+import configure as cfg 
 
 
 # basic model parameters
@@ -23,25 +23,38 @@ def placeholder_inputs(batch_size=None):
     return images_ph, labels_ph
 
 
-def fill_feed_dict(train_idx, batch_idx):
+def fill_feed_dict(lst, batch_idx, images_ph, labels_ph, use_rbg, use_dep):
     """Fills the feed_dict for training the given step
     """
-    N = train_idx.shape[0]
+    N = len(lst)
 
-    if batch_id + FLAGS.batch_size > N:
-        feed_dict = {}
+    start = batch_idx
+    if batch_idx + FLAGS.batch_size > N:
+        stop = N
         batch_idx = -1
     else:
-        feed_dict = {}
+        stop = FLAGS.batch_size
         batch_idx += FLAGS.batch_size
+
+    if use_rbg:
+        img, lbl = common.load_images(lst[start:stop], cfg.DIR_DATA, cfg.EXT_RGB, cfg.CLASSES)
+    if use_dep:
+        img, lbl = common.load_images(lst[start:stop], cfg.DIR_DATA, cfg.EXT_D, cfg.CLASSES)
+    feed_dict = {images_ph: img, labels_ph: lbl}
     return feed_dict, batch_idx
 
 
 #=========================================================================================
 def run_training():
+    # load data
+    print 'Loading data...'
     net_data = np.load(cfg.PTH_WEIGHT_ALEX).item()
+    with open(cfg.PTH_TRAIN_LST, 'r') as f: train_lst = f.read().splitlines()
+    with open(cfg.PTH_EVAL_LST, 'r') as f: eval_lst = f.read().splitlines()
+
 
     # tensorflow variables and operations
+    print 'Preparing tensorflow...'
     images_ph, labels_ph = placeholder_inputs()
 
     prob = model1.inference(images_ph, net_data, is_training=True)
@@ -63,14 +76,16 @@ def run_training():
     # start the training loop
     for step in range(FLAGS.max_iter):
         # training phase
-        rgb_paths, dep_paths, labels = common.get_paths_labels(cfg.DIR_DATA, cfg.PTH_TRAIN_LST, cfg.CLASSES, to_shuffle=True)
+        #rgb_paths, dep_paths, labels = common.get_paths_labels(cfg.DIR_DATA, train_lst, cfg.CLASSES, to_shuffle=True)
+        np.random.shuffle(train_lst)
 
         batch_idx = 0
         while batch_idx != -1:
-            fd, batch_idx = fill_feed_dict(train_idx, batch_idx)
+            fd, batch_idx = fill_feed_dict(train_lst, batch_idx, images_ph, labels_ph, 
+                use_rbg=True, use_dep=False)
+            #train
 
         # evaluation phase
-        rgb_paths, dep_paths, labels = common.get_paths_labels(cfg.DIR_DATA, cfg.PTH_EVAL_LST, cfg.CLASSES, to_shuffle=False)
     return
 
 
