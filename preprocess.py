@@ -3,6 +3,9 @@ import configure as cfg
 import numpy as np
 import cv2
 
+IMREAD_COLOR = int(cv2.IMREAD_COLOR)
+IMREAD_UNCHANGED = int(cv2.IMREAD_UNCHANGED)
+
 def resize_img(img):
     im_h,im_w,im_c = img.shape
 
@@ -100,8 +103,8 @@ def main():
 
             for sid in sample_ids:
                 # load images
-                rgb = cv2.imread(os.path.join(obj_pth, sid+'_crop.png'), cv2.CV_LOAD_IMAGE_COLOR)
-                dep = cv2.imread(os.path.join(obj_pth, sid+'_depthcrop.png'), cv2.CV_LOAD_IMAGE_UNCHANGED)
+                rgb = cv2.imread(os.path.join(obj_pth, sid+cfg.EXT_RGB), IMREAD_COLOR)
+                dep = cv2.imread(os.path.join(obj_pth, sid+cfg.EXT_D), IMREAD_UNCHANGED)
 
                 # colorize depth
                 dep = colorize_depth(dep)
@@ -121,8 +124,8 @@ def main():
                 dep -= mean_img
 
                 # write image
-                cv2.imwrite(os.path.join(obj_pth_out, sid+'_crop.png'), rgb)
-                cv2.imwrite(os.path.join(obj_pth_out, sid+'_depthcrop.png'), dep)
+                cv2.imwrite(os.path.join(obj_pth_out, sid+cfg.EXT_RGB), rgb)
+                cv2.imwrite(os.path.join(obj_pth_out, sid+cfg.EXT_D), dep)
     return
 
 

@@ -6,8 +6,8 @@ DIR_CKPT        = 'checkpoints'
 DIR_LST         = 'lists'
 DIR_MODEL       = 'models'
 DIR_SUMMARY     = 'summary'
-DIR_DATA_RAW    = os.path.join(DIR_HOME, 'rgbd-dataset') #TODO: change accordingly
-DIR_DATA        = os.path.join(DIR_HOME, 'rgbd-dataset-processed') #TODO: change accordingly
+DIR_DATA_RAW    = os.path.join(DIR_HOME, 'data', 'rgbd-dataset') #TODO: change accordingly
+DIR_DATA        = os.path.join(DIR_HOME, 'data', 'rgbd-dataset-processed') #TODO: change accordingly
 
 # Lists
 PTH_TRAIN_LST   = os.path.join(DIR_LST, 'train_full.lst')
