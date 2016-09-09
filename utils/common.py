@@ -3,8 +3,17 @@ import numpy as np
 import cv2
 
 
-def early_stopping():
-    return
+def early_stopping(old_val, new_val, patience_count, tolerance=1e-4, patience_limit=5):
+    to_stop = False
+    improvement = new_val - old_val
+    if improvement < tolerance:
+        if patience_count < patience_limit:
+            patience_count += 1
+        else:
+            to_stop = True
+    else:
+        patience_count = 0
+    return to_stop, patience_count
 
 
 def load_images(lst, data_dir, ext, classes):

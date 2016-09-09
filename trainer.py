@@ -8,7 +8,7 @@ import configure as cfg
 
 # basic model parameters
 FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_integer('max_iter', 2000, """Maximum number of training iteration.""")
+tf.app.flags.DEFINE_integer('max_iter', 10000, """Maximum number of training iteration.""")
 tf.app.flags.DEFINE_integer('batch_size', 100, """Numer of images to process in a batch.""")
 tf.app.flags.DEFINE_integer('img_s', cfg.IMG_S, """"Size of a square image.""")
 tf.app.flags.DEFINE_integer('n_classes', 51, """Number of classes.""")
@@ -59,7 +59,7 @@ def do_eval(sess, eval_correct, images_ph, labels_ph, keep_prob_ph, data_list, t
 
     batch_idx = 0
     while batch_idx != -1:
-        fd, batch_idx = fill_feed_dict(data_lst, batch_idx, images_ph, labels_ph, keep_prob_ph, tag, is_training=False)
+        fd, batch_idx = fill_feed_dict(data_list, batch_idx, images_ph, labels_ph, keep_prob_ph, tag, is_training=False)
         true_count += sess.run(eval_correct, feed_dict=fd)
 
     precision = true_count / num_samples
@@ -97,6 +97,8 @@ def run_training(tag):
 
 
     # start the training loop
+    old_precision = sys.maxsize
+    patience_count = 0
     print 'Start the training loop...'
     for step in range(FLAGS.max_iter):
         # training phase----------------------------------------------
@@ -105,7 +107,10 @@ def run_training(tag):
 
         batch_idx = 0
         while batch_idx != -1:
-            fd, batch_idx = fill_feed_dict(train_lst, batch_idx, images_ph, labels_ph, tag, is_training=True)
+            fd, batch_idx = fill_feed_dict(
+                    train_lst, batch_idx, 
+                    images_ph, labels_ph, keep_prob_ph, 
+                    tag, is_training=True)
             _, loss_value = sess.run([train_op, loss], feed_dict=fd)
 
         duration = time.time() - start_time
@@ -125,10 +130,15 @@ def run_training(tag):
             saver.save(sess, checkpoint_file, global_step=step)
 
             print 'Training data eval:'
-            precision = do_eval(sess, eval_correct, images_ph, labels_ph, keep_prob_ph, train_lst, tag)
+            do_eval(sess, eval_correct, images_ph, labels_ph, keep_prob_ph, train_lst, tag)
 
             print 'Validation data eval:'
             precision = do_eval(sess, eval_correct, images_ph, labels_ph, keep_prob_ph, eval_lst, tag)
+
+            # early stopping
+            to_stop, patience_count = common.early_stopping(old_precision, precision, patience_count)
+            old_precision = precision
+            if to_stop: break
     return
 
 
