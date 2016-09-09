@@ -3,3 +3,4 @@
 .DS_Store
 models/bvlc_alexnet.npy
 summary/*
+checkpoints/*

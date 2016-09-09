@@ -18,12 +18,10 @@ tf.app.flags.DEFINE_float('learning_rate', 1e-3, """"Learning rate for training 
 #=========================================================================================
 def placeholder_inputs(batch_size=None):
     images_ph = tf.placeholder(tf.float32, shape=(batch_size, FLAGS.img_s, FLAGS.img_s, 3), 
-            name='images_placeholder') #TODO:check dimension's order
+            name='images_placeholder') 
     labels_ph = tf.placeholder(tf.float32, shape=(batch_size, FLAGS.n_classes),
             name='labels_placeholder')
-
-    #keep_prob = 0.5 if training, else 1.0
-    keep_prob_ph = tf.placeholder_with_default(0.5, shape=[], name='keep_prob_placeholder')
+    keep_prob_ph = tf.placeholder(tf.float32, shape=(), name='keep_prob_placeholder')
 
     return images_ph, labels_ph, keep_prob_ph
 
@@ -59,6 +57,7 @@ def do_eval(sess, eval_correct, images_ph, labels_ph, keep_prob_ph, data_list, t
 
     batch_idx = 0
     while batch_idx != -1:
+        ipdb.set_trace()
         fd, batch_idx = fill_feed_dict(data_list, batch_idx, images_ph, labels_ph, keep_prob_ph, tag, is_training=False)
         true_count += sess.run(eval_correct, feed_dict=fd)
 
@@ -125,7 +124,7 @@ def run_training(tag):
 
 
         # write checkpoint---------------------------------------------
-        if step % 100 == 0 or step == FLAGS.max_iter-1:
+        if (step) % 50 == 0 or (step+1) == FLAGS.max_iter:
             checkpoint_file = os.path.join(cfg.DIR_CKPT, tag)
             saver.save(sess, checkpoint_file, global_step=step)
 
