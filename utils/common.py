@@ -20,7 +20,7 @@ def load_images(lst, data_dir, ext, classes):
 
         foo = classes.index(i.split('/')[0])
         bar = np.zeros((1,len(classes)))
-        bar[0,foo] = 1
+        bar[0,foo] = 1.0
         if labels == []:
             labels = bar
         else:

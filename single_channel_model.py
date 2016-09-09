@@ -2,6 +2,7 @@ import os, ipdb
 import tensorflow as tf
 import numpy as np
 
+FLAGS = tf.app.flags.FLAGS
 
 def conv(input, kernel, biases, k_h, k_w, c_o, s_h, s_w, padding='VALID', group=1):
     """Wrapper for TensorFlow's 2D convolution
@@ -124,8 +125,17 @@ def inference(images, net_data, is_training):
     # fc8 layer - classifier
     ## fc(1000, relu=False, name='fc8')
     with tf.name_scope('fc8') as scope:
-        fc8W = tf.Variable(net_data['fc8'][0], name='weight')
-        fc8b = tf.Variable(net_data['fc8'][1], name='biases')
+        # do not use net_data as we have differenet number of classes here
+        #fc8W = tf.Variable(net_data['fc8'][0], name='weight')
+        #fc8b = tf.Variable(net_data['fc8'][1], name='biases')
+        fc8W_mean = np.mean(net_data['fc8'][0])
+        fc8W_std  = np.std(net_data['fc8'][0])
+        fc8b_mean = np.mean(net_data['fc8'][1])
+        fc8b_std  = np.std(net_data['fc8'][1])
+        fc8W = tf.Variable(tf.random_normal([4096,FLAGS.n_classes], 
+            mean=fc8W_mean, stddev=fc8W_std), name='weight')
+        fc8b = tf.Variable(tf.random_normal([FLAGS.n_classes],
+            mean=fc8b_mean, stddev=fc8b_std), name='biases')
         fc8 = tf.nn.xw_plus_b(fc7_drop, fc8W, fc8b, name=scope)
 
 
@@ -162,7 +172,7 @@ def training(loss, learning_rate=None):
         train_op: the op for training
     """
     if learning_rate is None:
-        learning_rate = tf.app.flags.FLAGS.learning_rate
+        learning_rate = FLAGS.learning_rate
 
     # Add a scalar summary for the snapshot loss
     tf.scalar_summary(loss.op.name, loss)

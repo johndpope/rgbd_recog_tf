@@ -1,6 +1,6 @@
 import tensorflow as tf
 import numpy as np
-import single_channel_model as model1
+import single_channel_model as model
 import os, sys, time, ipdb
 from utils import common
 import configure as cfg 
@@ -8,17 +8,19 @@ import configure as cfg
 
 # basic model parameters
 FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_integer('max_iter', 1000, """Maximum number of training iteration.""")
-tf.app.flags.DEFINE_integer('batch_size', 200, """Numer of images to process in a batch.""")
+tf.app.flags.DEFINE_integer('max_iter', 2000, """Maximum number of training iteration.""")
+tf.app.flags.DEFINE_integer('batch_size', 100, """Numer of images to process in a batch.""")
 tf.app.flags.DEFINE_integer('img_s', cfg.IMG_S, """"Size of a square image.""")
 tf.app.flags.DEFINE_integer('n_classes', 51, """Number of classes.""")
-tf.app.flags.DEFINE_float('learning_rate', 1e-4, """"Learning rate for training models.""")
+tf.app.flags.DEFINE_float('learning_rate', 1e-3, """"Learning rate for training models.""")
 
 
 #=========================================================================================
 def placeholder_inputs(batch_size=None):
-    images_ph = tf.placeholder(tf.float32, shape=(batch_size, FLAGS.img_s, FLAGS.img_s, 3)) #TODO:check dimension's order
-    labels_ph = tf.placeholder(tf.int32, shape=(batch_size, FLAGS.n_classes))
+    images_ph = tf.placeholder(tf.float32, shape=(batch_size, FLAGS.img_s, FLAGS.img_s, 3), 
+            name='images_placeholder') #TODO:check dimension's order
+    labels_ph = tf.placeholder(tf.float32, shape=(batch_size, FLAGS.n_classes),
+            name='labels_placeholder')
 
     return images_ph, labels_ph
 
@@ -33,7 +35,7 @@ def fill_feed_dict(lst, batch_idx, images_ph, labels_ph, use_rbg, use_dep):
         stop = N
         batch_idx = -1
     else:
-        stop = FLAGS.batch_size
+        stop = batch_idx + FLAGS.batch_size
         batch_idx += FLAGS.batch_size
 
     if use_rbg:
@@ -44,8 +46,14 @@ def fill_feed_dict(lst, batch_idx, images_ph, labels_ph, use_rbg, use_dep):
     return feed_dict, batch_idx
 
 
+def do_eval(sess, eval_correct, images_ph, labels_ph, data_set):
+    true_count = 0
+    #TODO
+    return
+
+
 #=========================================================================================
-def run_training():
+def run_training(use_rgb, use_dep):
     # load data
     print 'Loading data...'
     net_data = np.load(cfg.PTH_WEIGHT_ALEX).item()
@@ -57,10 +65,10 @@ def run_training():
     print 'Preparing tensorflow...'
     images_ph, labels_ph = placeholder_inputs()
 
-    prob = model1.inference(images_ph, net_data, is_training=True)
-    loss = model1.loss(prob, labels_ph)
-    train_op = model1.training(loss)
-    eval_correct = model1.evaluation(prob, labels_ph)
+    prob = model.inference(images_ph, net_data, is_training=True)
+    loss = model.loss(prob, labels_ph)
+    train_op = model.training(loss)
+    eval_correct = model.evaluation(prob, labels_ph)
     init_op = tf.initialize_all_variables()
 
     # tensorflow monitor
@@ -74,29 +82,41 @@ def run_training():
 
 
     # start the training loop
+    print 'Start the training loop...'
     for step in range(FLAGS.max_iter):
-        # training phase
+        # training phase----------------------------------------------
         start_time = time.time()
         np.random.shuffle(train_lst)
 
         batch_idx = 0
         while batch_idx != -1:
-            fd, batch_idx = fill_feed_dict(train_lst, batch_idx, images_ph, labels_ph, 
-                use_rbg=True, use_dep=False)
+            fd, batch_idx = fill_feed_dict(train_lst, batch_idx, images_ph, labels_ph, use_rgb, use_dep)
             _, loss_value = sess.run([train_op, loss], feed_dict=fd)
-            ipdb.set_trace()
 
         duration = time.time() - start_time
 
 
-        # evaluation phase
+        # write summary------------------------------------------------
+        if step % 100 == 0:
+            print 'Step %d: loss = %.3f (%.3f sec)' % (step, loss_value, duration)
+            summary_str = sess.run(summary, feed_dict=fd)
+            summary_writer.add_summary(summary_str, step)
+            summary_writer.flush()
+
+
+        # write checkpoint---------------------------------------------
+        if (step+1)%100 == 0 or (step+1) == FLAGS.max_iter:
+            checkpoint_file = os.path.join(cfg.DIR_CKPT, 'checkpoint')
+            saver.save(sess, checkpoint_file, global_step=step)
+            ipdb.set_trace()
+            #TODO:do_eval()
     return
 
 
 #=========================================================================================
 def main(argv=None):
     with tf.Graph().as_default():
-        run_training()
+        run_training(use_rgb=True, use_dep=False)
 
 
 if __name__ == '__main__':
