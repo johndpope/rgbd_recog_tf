@@ -22,10 +22,13 @@ def placeholder_inputs(batch_size=None):
     labels_ph = tf.placeholder(tf.float32, shape=(batch_size, FLAGS.n_classes),
             name='labels_placeholder')
 
-    return images_ph, labels_ph
+    #keep_prob = 0.5 if training, else 1.0
+    keep_prob_ph = tf.placeholder_with_default(0.5, shape=[], name='keep_prob_placeholder')
+
+    return images_ph, labels_ph, keep_prob_ph
 
 
-def fill_feed_dict(lst, batch_idx, images_ph, labels_ph, use_rbg, use_dep):
+def fill_feed_dict(lst, batch_idx, images_ph, labels_ph, keep_prob_ph, tag, is_training):
     """Fills the feed_dict for training the given step
     """
     N = len(lst)
@@ -38,22 +41,34 @@ def fill_feed_dict(lst, batch_idx, images_ph, labels_ph, use_rbg, use_dep):
         stop = batch_idx + FLAGS.batch_size
         batch_idx += FLAGS.batch_size
 
-    if use_rbg:
+    if tag == 'rgb':
         img, lbl = common.load_images(lst[start:stop], cfg.DIR_DATA, cfg.EXT_RGB, cfg.CLASSES)
-    if use_dep:
+    if tag == 'dep':
         img, lbl = common.load_images(lst[start:stop], cfg.DIR_DATA, cfg.EXT_D, cfg.CLASSES)
-    feed_dict = {images_ph: img, labels_ph: lbl}
+
+    if is_training:
+        feed_dict = {images_ph: img, labels_ph: lbl, keep_prob_ph: 0.5}
+    else:
+        feed_dict = {images_ph: img, labels_ph: lbl, keep_prob_ph: 1.0}
     return feed_dict, batch_idx
 
 
-def do_eval(sess, eval_correct, images_ph, labels_ph, data_set):
+def do_eval(sess, eval_correct, images_ph, labels_ph, keep_prob_ph, data_list, tag):
     true_count = 0
-    #TODO
-    return
+    num_samples = len(data_list)
+
+    batch_idx = 0
+    while batch_idx != -1:
+        fd, batch_idx = fill_feed_dict(data_lst, batch_idx, images_ph, labels_ph, keep_prob_ph, tag, is_training=False)
+        true_count += sess.run(eval_correct, feed_dict=fd)
+
+    precision = true_count / num_samples
+    print 'Num samples: %d Num correct: %d Precision: %0.04f' % (num_samples, true_count, precision)
+    return precision
 
 
 #=========================================================================================
-def run_training(use_rgb, use_dep):
+def run_training(tag):
     # load data
     print 'Loading data...'
     net_data = np.load(cfg.PTH_WEIGHT_ALEX).item()
@@ -63,9 +78,9 @@ def run_training(use_rgb, use_dep):
 
     # tensorflow variables and operations
     print 'Preparing tensorflow...'
-    images_ph, labels_ph = placeholder_inputs()
+    images_ph, labels_ph, keep_prob_ph = placeholder_inputs()
 
-    prob = model.inference(images_ph, net_data, is_training=True)
+    prob = model.inference(images_ph, net_data, keep_prob_ph)
     loss = model.loss(prob, labels_ph)
     train_op = model.training(loss)
     eval_correct = model.evaluation(prob, labels_ph)
@@ -90,14 +105,14 @@ def run_training(use_rgb, use_dep):
 
         batch_idx = 0
         while batch_idx != -1:
-            fd, batch_idx = fill_feed_dict(train_lst, batch_idx, images_ph, labels_ph, use_rgb, use_dep)
+            fd, batch_idx = fill_feed_dict(train_lst, batch_idx, images_ph, labels_ph, tag, is_training=True)
             _, loss_value = sess.run([train_op, loss], feed_dict=fd)
 
         duration = time.time() - start_time
 
 
         # write summary------------------------------------------------
-        if step % 100 == 0:
+        if step % 50 == 0:
             print 'Step %d: loss = %.3f (%.3f sec)' % (step, loss_value, duration)
             summary_str = sess.run(summary, feed_dict=fd)
             summary_writer.add_summary(summary_str, step)
@@ -105,18 +120,23 @@ def run_training(use_rgb, use_dep):
 
 
         # write checkpoint---------------------------------------------
-        if (step+1)%100 == 0 or (step+1) == FLAGS.max_iter:
-            checkpoint_file = os.path.join(cfg.DIR_CKPT, 'checkpoint')
+        if step % 100 == 0 or step == FLAGS.max_iter-1:
+            checkpoint_file = os.path.join(cfg.DIR_CKPT, tag)
             saver.save(sess, checkpoint_file, global_step=step)
-            ipdb.set_trace()
-            #TODO:do_eval()
+
+            print 'Training data eval:'
+            precision = do_eval(sess, eval_correct, images_ph, labels_ph, keep_prob_ph, train_lst, tag)
+
+            print 'Validation data eval:'
+            precision = do_eval(sess, eval_correct, images_ph, labels_ph, keep_prob_ph, eval_lst, tag)
     return
 
 
 #=========================================================================================
 def main(argv=None):
     with tf.Graph().as_default():
-        run_training(use_rgb=True, use_dep=False)
+        run_training(tag='rgb')
+        run_training(tag='dep')
 
 
 if __name__ == '__main__':

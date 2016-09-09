@@ -37,7 +37,7 @@ def conv(input, kernel, biases, k_h, k_w, c_o, s_h, s_w, padding='VALID', group=
     return result
 
 
-def inference(images, net_data, is_training):
+def inference(images, net_data, keep_prob):
     """Build the inference for one single channel.
 
     Args:
@@ -45,7 +45,6 @@ def inference(images, net_data, is_training):
 
     Returns:
     """
-    keep_prob = 0.5 if is_training else 1.0
     batch_size = 0 if images.get_shape()[0].value is None else images.get_shape()[0].value
 
     # conv-1 layer
