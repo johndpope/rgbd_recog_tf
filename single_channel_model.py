@@ -140,22 +140,22 @@ def inference(images, net_data, keep_prob):
 
     # prob
     ## softmax(name='prob')
-    prob = tf.nn.softmax(fc8, name='prob')
-    return prob
+    logits = tf.nn.softmax(fc8, name='prob')
+    return logits
 
 
-def loss(prob, labels):
+def loss(logits, labels):
     """Return the loss as categorical cross-entropy
 
     Args:
-        prob: probability from inference
+        logits: probability from inference
         labels: binary sequence, where 1 means the correct class, 0 otherwise
 
     Returns:
         loss: categorical crossentropy loss
     """
     if labels.get_shape()[0].value is not None:
-        loss = -tf.reduce_sum(labels * tf.log(prob), reduction_indices=1, name='loss')
+        loss = -tf.reduce_sum(labels * tf.log(logits), reduction_indices=1, name='loss')
     else:
         loss = tf.Variable(0, dtype=tf.float32, name='loss')
     return loss
@@ -187,9 +187,10 @@ def training(loss, learning_rate=None):
     return train_op
 
 
-def evaluation(prob, labels):
+def evaluation(logits, labels):
+    ipdb.set_trace()
     if labels.get_shape()[0].value is None:
         return 0.0
 
-    correct = tf.nn.in_top_k(prob, labels, 1)
+    correct = tf.nn.in_top_k(logits, labels, 1)
     return tf.reduce_sum(tf.cast(correct, tf.int32))

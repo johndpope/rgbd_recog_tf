@@ -26,9 +26,10 @@ def placeholder_inputs(batch_size=None):
     return images_ph, labels_ph, keep_prob_ph
 
 
-def fill_feed_dict(lst, batch_idx, images_ph, labels_ph, keep_prob_ph, tag, is_training):
+def fill_feed_dict(lst, images_ph, labels_ph, keep_prob_ph, tag, is_training):
     """Fills the feed_dict for training the given step
     """
+    '''
     N = len(lst)
 
     start = batch_idx
@@ -38,27 +39,31 @@ def fill_feed_dict(lst, batch_idx, images_ph, labels_ph, keep_prob_ph, tag, is_t
     else:
         stop = batch_idx + FLAGS.batch_size
         batch_idx += FLAGS.batch_size
+    '''
+
+    popped = lst[:FLAGS.batch_size]
+    lst[:FLAGS.batch_size] = []
 
     if tag == 'rgb':
-        img, lbl = common.load_images(lst[start:stop], cfg.DIR_DATA, cfg.EXT_RGB, cfg.CLASSES)
+        img, lbl = common.load_images(popped, cfg.DIR_DATA, cfg.EXT_RGB, cfg.CLASSES)
     if tag == 'dep':
-        img, lbl = common.load_images(lst[start:stop], cfg.DIR_DATA, cfg.EXT_D, cfg.CLASSES)
+        img, lbl = common.load_images(popped, cfg.DIR_DATA, cfg.EXT_D, cfg.CLASSES)
 
     if is_training:
         feed_dict = {images_ph: img, labels_ph: lbl, keep_prob_ph: 0.5}
     else:
         feed_dict = {images_ph: img, labels_ph: lbl, keep_prob_ph: 1.0}
-    return feed_dict, batch_idx
+    return feed_dict, lst
 
 
-def do_eval(sess, eval_correct, images_ph, labels_ph, keep_prob_ph, data_list, tag):
+def do_eval(sess, logits, eval_correct, images_ph, labels_ph, keep_prob_ph, data_list, tag):
     true_count = 0
     num_samples = len(data_list)
 
-    batch_idx = 0
-    while batch_idx != -1:
+    while data_list != []:
         ipdb.set_trace()
-        fd, batch_idx = fill_feed_dict(data_list, batch_idx, images_ph, labels_ph, keep_prob_ph, tag, is_training=False)
+        fd, data_list = fill_feed_dict(data_list, images_ph, labels_ph, keep_prob_ph, tag, is_training=False)
+        prob_values = sess.run(logits, feed_dict=fd)
         true_count += sess.run(eval_correct, feed_dict=fd)
 
     precision = true_count / num_samples
@@ -73,16 +78,17 @@ def run_training(tag):
     net_data = np.load(cfg.PTH_WEIGHT_ALEX).item()
     with open(cfg.PTH_TRAIN_LST, 'r') as f: train_lst = f.read().splitlines()
     with open(cfg.PTH_EVAL_LST, 'r') as f: eval_lst = f.read().splitlines()
+    train_lst = train_lst[:2*FLAGS.batch_size] #TODO: remove this
 
 
     # tensorflow variables and operations
     print 'Preparing tensorflow...'
-    images_ph, labels_ph, keep_prob_ph = placeholder_inputs()
+    images_ph, labels_ph, keep_prob_ph = placeholder_inputs(FLAGS.batch_size)
 
-    prob = model.inference(images_ph, net_data, keep_prob_ph)
-    loss = model.loss(prob, labels_ph)
+    logits = model.inference(images_ph, net_data, keep_prob_ph)
+    loss = model.loss(logits, labels_ph)
     train_op = model.training(loss)
-    eval_correct = model.evaluation(prob, labels_ph)
+    eval_correct = model.evaluation(logits, labels_ph)
     init_op = tf.initialize_all_variables()
 
     # tensorflow monitor
@@ -102,14 +108,11 @@ def run_training(tag):
     for step in range(FLAGS.max_iter):
         # training phase----------------------------------------------
         start_time = time.time()
-        np.random.shuffle(train_lst)
+        using_lst = train_lst[:] #clone train_lst
+        np.random.shuffle(using_lst)
 
-        batch_idx = 0
-        while batch_idx != -1:
-            fd, batch_idx = fill_feed_dict(
-                    train_lst, batch_idx, 
-                    images_ph, labels_ph, keep_prob_ph, 
-                    tag, is_training=True)
+        while using_lst != []:
+            fd, using_lst = fill_feed_dict(using_lst, images_ph, labels_ph, keep_prob_ph, tag, is_training=True)
             _, loss_value = sess.run([train_op, loss], feed_dict=fd)
 
         duration = time.time() - start_time
@@ -129,10 +132,10 @@ def run_training(tag):
             saver.save(sess, checkpoint_file, global_step=step)
 
             print 'Training data eval:'
-            do_eval(sess, eval_correct, images_ph, labels_ph, keep_prob_ph, train_lst, tag)
+            do_eval(sess, logits, eval_correct, images_ph, labels_ph, keep_prob_ph, train_lst, tag)
 
             print 'Validation data eval:'
-            precision = do_eval(sess, eval_correct, images_ph, labels_ph, keep_prob_ph, eval_lst, tag)
+            precision = do_eval(sess, logits, eval_correct, images_ph, labels_ph, keep_prob_ph, eval_lst, tag)
 
             # early stopping
             to_stop, patience_count = common.early_stopping(old_precision, precision, patience_count)
