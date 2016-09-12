@@ -188,9 +188,9 @@ def training(loss, learning_rate=None):
 
 
 def evaluation(logits, labels):
-    ipdb.set_trace()
     if labels.get_shape()[0].value is None:
         return 0.0
 
-    correct = tf.nn.in_top_k(logits, labels, 1)
+    num_labels = tf.argmax(labels, dimension=1) # convert from binary sequences to class id
+    correct = tf.nn.in_top_k(logits, num_labels, 1)
     return tf.reduce_sum(tf.cast(correct, tf.int32))

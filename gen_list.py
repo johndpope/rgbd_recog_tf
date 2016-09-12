@@ -34,8 +34,8 @@ def main():
         if '.DS_Store' in objs: objs.remove('.DS_Store')
 
         train_objs = objs[:-2]
-        eval_objs = objs[-2]
-        test_objs = objs[-1]
+        eval_objs = [objs[-2]]
+        test_objs = [objs[-1]]
 
         make_lists(a_class, train_objs, train_f)
         make_lists(a_class, eval_objs, eval_f)

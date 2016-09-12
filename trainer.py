@@ -63,7 +63,6 @@ def do_eval(sess, logits, eval_correct, images_ph, labels_ph, keep_prob_ph, data
     while data_list != []:
         ipdb.set_trace()
         fd, data_list = fill_feed_dict(data_list, images_ph, labels_ph, keep_prob_ph, tag, is_training=False)
-        prob_values = sess.run(logits, feed_dict=fd)
         true_count += sess.run(eval_correct, feed_dict=fd)
 
     precision = true_count / num_samples
@@ -83,7 +82,7 @@ def run_training(tag):
 
     # tensorflow variables and operations
     print 'Preparing tensorflow...'
-    images_ph, labels_ph, keep_prob_ph = placeholder_inputs(FLAGS.batch_size)
+    images_ph, labels_ph, keep_prob_ph = placeholder_inputs()
 
     logits = model.inference(images_ph, net_data, keep_prob_ph)
     loss = model.loss(logits, labels_ph)
@@ -132,7 +131,12 @@ def run_training(tag):
             saver.save(sess, checkpoint_file, global_step=step)
 
             print 'Training data eval:'
-            do_eval(sess, logits, eval_correct, images_ph, labels_ph, keep_prob_ph, train_lst, tag)
+            #do_eval(sess, logits, eval_correct, images_ph, labels_ph, keep_prob_ph, train_lst, tag)
+            data_list=eval_lst[:]
+            ipdb.set_trace()
+            while data_list != []:
+                fd, data_list = fill_feed_dict(data_list, images_ph, labels_ph, keep_prob_ph, tag, is_training=False)
+                sess.run(eval_correct, feed_dict=fd)
 
             print 'Validation data eval:'
             precision = do_eval(sess, logits, eval_correct, images_ph, labels_ph, keep_prob_ph, eval_lst, tag)
