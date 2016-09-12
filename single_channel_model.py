@@ -41,12 +41,10 @@ def inference(images, net_data, keep_prob):
     """Build the inference for one single channel.
 
     Args:
-        images: image placeholder
+        images: 
 
     Returns:
     """
-    batch_size = 0 if images.get_shape()[0].value is None else images.get_shape()[0].value
-
     # conv-1 layer
     ## conv(11,11,96,4,4,padding='VALID',name='conv1')
     with tf.name_scope('conv1') as scope:
@@ -107,7 +105,7 @@ def inference(images, net_data, keep_prob):
     with tf.name_scope('fc6') as scope:
         fc6W = tf.Variable(net_data['fc6'][0], name='weight')
         fc6b = tf.Variable(net_data['fc6'][1], name='biases')
-        fc6_in = tf.reshape(maxpool5, [batch_size, int(np.prod(maxpool5.get_shape()[1:]))])
+        fc6_in = tf.reshape(maxpool5, [FLAGS.batch_size, int(np.prod(maxpool5.get_shape()[1:]))])
         fc6 = tf.nn.relu_layer(fc6_in, fc6W, fc6b, name=scope)
         fc6_drop = tf.nn.dropout(fc6, keep_prob=keep_prob, name='drop')
 
@@ -154,10 +152,8 @@ def loss(logits, labels):
     Returns:
         loss: categorical crossentropy loss
     """
-    if labels.get_shape()[0].value is not None:
-        loss = -tf.reduce_sum(labels * tf.log(logits), reduction_indices=1, name='loss')
-    else:
-        loss = tf.Variable(0, dtype=tf.float32, name='loss')
+    L = -tf.reduce_sum(labels * tf.log(logits), reduction_indices=1)
+    loss = tf.reduce_sum(L, reduction_indices=0, name='loss')
     return loss
 
 
@@ -188,9 +184,6 @@ def training(loss, learning_rate=None):
 
 
 def evaluation(logits, labels):
-    if labels.get_shape()[0].value is None:
-        return 0.0
-
-    num_labels = tf.argmax(labels, dimension=1) # convert from binary sequences to class id
-    correct = tf.nn.in_top_k(logits, num_labels, 1)
+    id_labels = tf.argmax(labels, dimension=1) # convert from binary sequences to class id
+    correct = tf.nn.in_top_k(logits, id_labels, 1)
     return tf.reduce_sum(tf.cast(correct, tf.int32))

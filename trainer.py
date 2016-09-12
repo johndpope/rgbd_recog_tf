@@ -16,7 +16,7 @@ tf.app.flags.DEFINE_float('learning_rate', 1e-3, """"Learning rate for training 
 
 
 #=========================================================================================
-def placeholder_inputs(batch_size=None):
+def placeholder_inputs(batch_size):
     images_ph = tf.placeholder(tf.float32, shape=(batch_size, FLAGS.img_s, FLAGS.img_s, 3), 
             name='images_placeholder') 
     labels_ph = tf.placeholder(tf.float32, shape=(batch_size, FLAGS.n_classes),
@@ -29,18 +29,6 @@ def placeholder_inputs(batch_size=None):
 def fill_feed_dict(lst, images_ph, labels_ph, keep_prob_ph, tag, is_training):
     """Fills the feed_dict for training the given step
     """
-    '''
-    N = len(lst)
-
-    start = batch_idx
-    if batch_idx + FLAGS.batch_size > N:
-        stop = N
-        batch_idx = -1
-    else:
-        stop = batch_idx + FLAGS.batch_size
-        batch_idx += FLAGS.batch_size
-    '''
-
     popped = lst[:FLAGS.batch_size]
     lst[:FLAGS.batch_size] = []
 
@@ -48,6 +36,11 @@ def fill_feed_dict(lst, images_ph, labels_ph, keep_prob_ph, tag, is_training):
         img, lbl = common.load_images(popped, cfg.DIR_DATA, cfg.EXT_RGB, cfg.CLASSES)
     if tag == 'dep':
         img, lbl = common.load_images(popped, cfg.DIR_DATA, cfg.EXT_D, cfg.CLASSES)
+
+    if img.shape[0] < FLAGS.batch_size: # pad the remainder with zeros
+        N = FLAGS.batch_size - img.shape[0]
+        img = np.pad(img, ((0,N),(0,0),(0,0),(0,0)), 'constant', constant_values=0)
+        lbl = np.pad(lbl, ((0,N),(0,0)), 'constant', constant_values=0)
 
     if is_training:
         feed_dict = {images_ph: img, labels_ph: lbl, keep_prob_ph: 0.5}
@@ -61,12 +54,11 @@ def do_eval(sess, logits, eval_correct, images_ph, labels_ph, keep_prob_ph, data
     num_samples = len(data_list)
 
     while data_list != []:
-        ipdb.set_trace()
         fd, data_list = fill_feed_dict(data_list, images_ph, labels_ph, keep_prob_ph, tag, is_training=False)
         true_count += sess.run(eval_correct, feed_dict=fd)
 
-    precision = true_count / num_samples
-    print 'Num samples: %d Num correct: %d Precision: %0.04f' % (num_samples, true_count, precision)
+    precision = true_count*1.0 / num_samples
+    print '  Num samples:%d Num correct:%d Precision:%0.04f' % (num_samples, true_count, precision)
     return precision
 
 
@@ -77,12 +69,11 @@ def run_training(tag):
     net_data = np.load(cfg.PTH_WEIGHT_ALEX).item()
     with open(cfg.PTH_TRAIN_LST, 'r') as f: train_lst = f.read().splitlines()
     with open(cfg.PTH_EVAL_LST, 'r') as f: eval_lst = f.read().splitlines()
-    train_lst = train_lst[:2*FLAGS.batch_size] #TODO: remove this
 
 
     # tensorflow variables and operations
     print 'Preparing tensorflow...'
-    images_ph, labels_ph, keep_prob_ph = placeholder_inputs()
+    images_ph, labels_ph, keep_prob_ph = placeholder_inputs(FLAGS.batch_size)
 
     logits = model.inference(images_ph, net_data, keep_prob_ph)
     loss = model.loss(logits, labels_ph)
@@ -126,19 +117,14 @@ def run_training(tag):
 
 
         # write checkpoint---------------------------------------------
-        if (step) % 50 == 0 or (step+1) == FLAGS.max_iter:
+        if (step+1) % 100 == 0 or (step+1) == FLAGS.max_iter:
             checkpoint_file = os.path.join(cfg.DIR_CKPT, tag)
             saver.save(sess, checkpoint_file, global_step=step)
 
-            print 'Training data eval:'
-            #do_eval(sess, logits, eval_correct, images_ph, labels_ph, keep_prob_ph, train_lst, tag)
-            data_list=eval_lst[:]
-            ipdb.set_trace()
-            while data_list != []:
-                fd, data_list = fill_feed_dict(data_list, images_ph, labels_ph, keep_prob_ph, tag, is_training=False)
-                sess.run(eval_correct, feed_dict=fd)
+            print ' Training data eval:'
+            do_eval(sess, logits, eval_correct, images_ph, labels_ph, keep_prob_ph, train_lst, tag)
 
-            print 'Validation data eval:'
+            print ' Validation data eval:'
             precision = do_eval(sess, logits, eval_correct, images_ph, labels_ph, keep_prob_ph, eval_lst, tag)
 
             # early stopping
