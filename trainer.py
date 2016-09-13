@@ -9,7 +9,7 @@ import configure as cfg
 # basic model parameters
 FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_integer('max_iter', 10000, """Maximum number of training iteration.""")
-tf.app.flags.DEFINE_integer('batch_size', 100, """Numer of images to process in a batch.""")
+tf.app.flags.DEFINE_integer('batch_size', 400, """Numer of images to process in a batch.""")
 tf.app.flags.DEFINE_integer('img_s', cfg.IMG_S, """"Size of a square image.""")
 tf.app.flags.DEFINE_integer('n_classes', 51, """Number of classes.""")
 tf.app.flags.DEFINE_float('learning_rate', 1e-3, """"Learning rate for training models.""")
@@ -101,23 +101,28 @@ def run_training(tag):
         using_lst = train_lst[:] #clone train_lst
         np.random.shuffle(using_lst)
 
+        total_loss = 0
         while using_lst != []:
             fd, using_lst = fill_feed_dict(using_lst, images_ph, labels_ph, keep_prob_ph, tag, is_training=True)
             _, loss_value = sess.run([train_op, loss], feed_dict=fd)
+            total_loss += loss_value
+            #print 'loss=%.3f, %d samples left\r' % (loss_value, len(using_lst))
 
         duration = time.time() - start_time
 
 
         # write summary------------------------------------------------
-        if step % 50 == 0:
-            print 'Step %d: loss = %.3f (%.3f sec)' % (step, loss_value, duration)
+        if step % 1 == 0:
+            print 'Step %d: loss = %.3f (%.3f sec)' % (step, total_loss, duration)
             summary_str = sess.run(summary, feed_dict=fd)
             summary_writer.add_summary(summary_str, step)
             summary_writer.flush()
+        else:
+            print 'Step', step, '  '
 
 
         # write checkpoint---------------------------------------------
-        if (step+1) % 100 == 0 or (step+1) == FLAGS.max_iter:
+        if (step) % 5 == 0 or (step+1) == FLAGS.max_iter:
             checkpoint_file = os.path.join(cfg.DIR_CKPT, tag)
             saver.save(sess, checkpoint_file, global_step=step)
 
@@ -130,7 +135,9 @@ def run_training(tag):
             # early stopping
             to_stop, patience_count = common.early_stopping(old_precision, precision, patience_count)
             old_precision = precision
-            if to_stop: break
+            if to_stop: 
+                print 'Early stopping...'
+                break
     return
 
 
