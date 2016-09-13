@@ -41,9 +41,12 @@ def inference(images, net_data, keep_prob):
     """Build the inference for one single channel.
 
     Args:
-        images: 
+        images: 4D tensor: [batch_size, image_size, image_size, 3]
+        net_data: pretrained weights from AlexNet
+        keep_prob: Tensor, 0.5 if training, 1.0 otherwise
 
     Returns:
+        logits:
     """
     # conv-1 layer
     ## conv(11,11,96,4,4,padding='VALID',name='conv1')
@@ -146,8 +149,8 @@ def loss(logits, labels):
     """Return the loss as categorical cross-entropy
 
     Args:
-        logits: probability from inference
-        labels: binary sequence, where 1 means the correct class, 0 otherwise
+        logits: results from inference
+        labels: 2D Tensor [batch_size, n_classes], 1 if object in that class, 0 otherwise
 
     Returns:
         loss: categorical crossentropy loss
@@ -162,6 +165,7 @@ def training(loss, learning_rate=None):
 
     Args:
         loss: loss tensor, from loss()
+        learning_rate: if not specified -> use FLAGS.learning_rate
 
     Returns:
         train_op: the op for training
@@ -184,6 +188,15 @@ def training(loss, learning_rate=None):
 
 
 def evaluation(logits, labels):
+    """Find the number of correct classification (top logits among classes), based on labels
+
+    Args:
+        logits: results of model's inference
+        labels: 2D Tensor [batch_size, n_classes], 1 if object in that class, 0 otherwise
+
+    Returns:
+        Number of correct classification
+    """
     id_labels = tf.argmax(labels, dimension=1) # convert from binary sequences to class id
     correct = tf.nn.in_top_k(logits, id_labels, 1)
     return tf.reduce_sum(tf.cast(correct, tf.int32))
