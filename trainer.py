@@ -6,13 +6,15 @@ from utils import common
 import configure as cfg 
 
 
-# basic model parameters
+# model parameters
 FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_integer('max_iter', 10000, """Maximum number of training iteration.""")
 tf.app.flags.DEFINE_integer('batch_size', 400, """Numer of images to process in a batch.""")
 tf.app.flags.DEFINE_integer('img_s', cfg.IMG_S, """"Size of a square image.""")
 tf.app.flags.DEFINE_integer('n_classes', 51, """Number of classes.""")
 tf.app.flags.DEFINE_float('learning_rate', 1e-3, """"Learning rate for training models.""")
+tf.app.flags.DEFINE_integer('summary_frequency', 1, """How often to write summary.""")
+tf.app.flags.DEFINE_integer('checkpoint_frequency', 5, """How often to evaluate and write checkpoint.""")
 
 
 #=========================================================================================
@@ -113,7 +115,7 @@ def run_training(tag):
 
 
         # write summary------------------------------------------------
-        if step % 1 == 0:
+        if step % FLAGS.summary_frequency == 0:
             print 'Step %d: loss = %.3f (%.3f sec)' % (step, total_loss, duration)
             summary_str = sess.run(summary, feed_dict=fd)
             summary_writer.add_summary(summary_str, step)
@@ -123,7 +125,7 @@ def run_training(tag):
 
 
         # write checkpoint---------------------------------------------
-        if (step) % 5 == 0 or (step+1) == FLAGS.max_iter:
+        if step % FLAGS.checkpoint_frequency == 0 or (step+1) == FLAGS.max_iter:
             checkpoint_file = os.path.join(cfg.DIR_CKPT, tag)
             saver.save(sess, checkpoint_file, global_step=step)
 
