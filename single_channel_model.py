@@ -155,8 +155,22 @@ def loss(logits, labels):
     Returns:
         loss: categorical crossentropy loss
     """
-    L = -tf.reduce_sum(labels * tf.log(logits), reduction_indices=1)
+    #L = -tf.reduce_sum(labels * tf.log(logits), reduction_indices=1)
+    #loss = tf.reduce_sum(L, reduction_indices=0, name='loss')
+
+    L = -tf.reduce_sum(labels * tf.log(tf.clip_by_value(logits, 1e-10, 1.0)), reduction_indices=1)
     loss = tf.reduce_sum(L, reduction_indices=0, name='loss')
+
+    # regularize fully connected layers
+    with tf.variable_scope('fc7'):
+        fc7W = tf.get_variable('weight', [4096,4096], dtype=tf.float32)
+        fc7b = tf.get_variable('biases', [4096], dtype=tf.float32)
+    with tf.variable_scope('fc8'):
+        fc8W = tf.get_variable('weight', [4096,FLAGS.n_classes], dtype=tf.float32)
+        fc8b = tf.get_variable('biases', [FLAGS.n_classes], dtype=tf.float32)
+
+    regularizers = tf.nn.l2_loss(fc7W) + tf.nn.l2_loss(fc7b) + tf.nn.l2_loss(fc8W) + tf.nn.l2_loss(fc8b)
+    loss += 5e-4 * regularizers
     return loss
 
 

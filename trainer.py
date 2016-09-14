@@ -53,8 +53,9 @@ def do_eval(sess, logits, eval_correct, images_ph, labels_ph, keep_prob_ph, data
     true_count = 0
     num_samples = len(data_list)
 
-    while data_list != []:
-        fd, data_list = fill_feed_dict(data_list, images_ph, labels_ph, keep_prob_ph, tag, is_training=False)
+    using_list = data_list[:]
+    while using_list != []:
+        fd, using_list = fill_feed_dict(using_list, images_ph, labels_ph, keep_prob_ph, tag, is_training=False)
         true_count += sess.run(eval_correct, feed_dict=fd)
 
     precision = true_count*1.0 / num_samples
@@ -105,8 +106,10 @@ def run_training(tag):
         while using_lst != []:
             fd, using_lst = fill_feed_dict(using_lst, images_ph, labels_ph, keep_prob_ph, tag, is_training=True)
             _, loss_value = sess.run([train_op, loss], feed_dict=fd)
+            if np.isnan(loss_value):
+                ipdb.set_trace()
+                print 'blabla'
             total_loss += loss_value
-            #print 'loss=%.3f, %d samples left\r' % (loss_value, len(using_lst))
 
         duration = time.time() - start_time
 
