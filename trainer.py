@@ -106,9 +106,7 @@ def run_training(tag):
         while using_lst != []:
             fd, using_lst = fill_feed_dict(using_lst, images_ph, labels_ph, keep_prob_ph, tag, is_training=True)
             _, loss_value = sess.run([train_op, loss], feed_dict=fd)
-            if np.isnan(loss_value):
-                ipdb.set_trace()
-                print 'blabla'
+            assert not np.isnan(loss_value), 'Loss value is NaN'
             total_loss += loss_value
 
         duration = time.time() - start_time
