@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 
 
-def early_stopping(old_val, new_val, patience_count, tolerance=1e-4, patience_limit=5):
+def early_stopping(old_val, new_val, patience_count, tolerance=1e-2, patience_limit=3):
     to_stop = False
     improvement = new_val - old_val
     if improvement < tolerance:

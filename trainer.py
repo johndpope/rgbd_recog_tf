@@ -8,7 +8,7 @@ import configure as cfg
 
 # model parameters
 FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_integer('max_iter', 10000, """Maximum number of training iteration.""")
+tf.app.flags.DEFINE_integer('max_iter', 1000, """Maximum number of training iteration.""")
 tf.app.flags.DEFINE_integer('batch_size', 400, """Numer of images to process in a batch.""")
 tf.app.flags.DEFINE_integer('img_s', cfg.IMG_S, """"Size of a square image.""")
 tf.app.flags.DEFINE_integer('n_classes', 51, """Number of classes.""")
@@ -28,36 +28,38 @@ def placeholder_inputs(batch_size):
     return images_ph, labels_ph, keep_prob_ph
 
 
-def fill_feed_dict(lst, images_ph, labels_ph, keep_prob_ph, tag, is_training):
+def fill_feed_dict(all_data, all_labels, start_idx, images_ph, labels_ph, keep_prob_ph, is_training):
     """Fills the feed_dict for training the given step
     """
-    popped = lst[:FLAGS.batch_size]
-    lst[:FLAGS.batch_size] = []
+    N = all_data.shape[0]
+    if start_idx+FLAGS.batch_size > N:
+        stop_idx = N
+    else:
+        stop_idx = start_idx+FLAGS.batch_size
 
-    if tag == 'rgb':
-        img, lbl = common.load_images(popped, cfg.DIR_DATA, cfg.EXT_RGB, cfg.CLASSES)
-    if tag == 'dep':
-        img, lbl = common.load_images(popped, cfg.DIR_DATA, cfg.EXT_D, cfg.CLASSES)
+    img = all_data[start_idx:stop_idx]
+    lbl = all_labels[start_idx:stop_idx]
 
     if img.shape[0] < FLAGS.batch_size: # pad the remainder with zeros
-        N = FLAGS.batch_size - img.shape[0]
-        img = np.pad(img, ((0,N),(0,0),(0,0),(0,0)), 'constant', constant_values=0)
-        lbl = np.pad(lbl, ((0,N),(0,0)), 'constant', constant_values=0)
+        M = FLAGS.batch_size - img.shape[0]
+        img = np.pad(img, ((0,M),(0,0),(0,0),(0,0)), 'constant', constant_values=0)
+        lbl = np.pad(lbl, ((0,M),(0,0)), 'constant', constant_values=0)
 
     if is_training:
         feed_dict = {images_ph: img, labels_ph: lbl, keep_prob_ph: 0.5}
     else:
         feed_dict = {images_ph: img, labels_ph: lbl, keep_prob_ph: 1.0}
-    return feed_dict, lst
+    return feed_dict, stop_idx
 
 
-def do_eval(sess, logits, eval_correct, images_ph, labels_ph, keep_prob_ph, data_list, tag):
-    true_count = 0
-    num_samples = len(data_list)
+def do_eval(sess, logits, eval_correct, images_ph, labels_ph, keep_prob_ph, all_data, all_labels):
+    true_count, start_idx = 0, 0
 
-    using_list = data_list[:]
-    while using_list != []:
-        fd, using_list = fill_feed_dict(using_list, images_ph, labels_ph, keep_prob_ph, tag, is_training=False)
+    while start_idx != all_data.shape[0]:
+        fd, start_idx = fill_feed_dict(
+            all_data, all_labels, start_idx, 
+            images_ph, labels_ph, keep_prob_ph, 
+            is_training=False)
         true_count += sess.run(eval_correct, feed_dict=fd)
 
     precision = true_count*1.0 / num_samples
@@ -72,6 +74,12 @@ def run_training(tag):
     net_data = np.load(cfg.PTH_WEIGHT_ALEX).item()
     with open(cfg.PTH_TRAIN_LST, 'r') as f: train_lst = f.read().splitlines()
     with open(cfg.PTH_EVAL_LST, 'r') as f: eval_lst = f.read().splitlines()
+    if tag == 'rgb':
+        ext = cfg.EXT_RGB
+    elif tag == 'dep':
+        ext = cfg.EXT_D
+    train_data, train_labels = common.load_images(train_lst, cfg.DIR_DATA, ext, cfg.CLASSES)
+    eval_data, eval_labels = common.load_images(train_lst, cfg.DIR_DATA, ext, cfg.CLASSES)
 
 
     # tensorflow variables and operations
@@ -101,12 +109,20 @@ def run_training(tag):
     for step in range(FLAGS.max_iter):
         # training phase----------------------------------------------
         start_time = time.time()
-        using_lst = train_lst[:] #clone train_lst
-        np.random.shuffle(using_lst)
+        #np.random.shuffle(using_lst)
 
-        total_loss = 0
-        while using_lst != []:
-            fd, using_lst = fill_feed_dict(using_lst, images_ph, labels_ph, keep_prob_ph, tag, is_training=True)
+        # shuffle training data
+        z = zip(train_data, train_labels)
+        np.random.shuffle(z)
+        train_data, train_labels = zip(*z)
+
+        # train by batches
+        total_loss, start_idx = 0, 0
+        while start_idx != train_data.shape[0]:
+            fd, start_idx = fill_feed_dict(
+                train_data, train_labe, start_idx, 
+                images_ph, labels_ph, keep_prob_ph,
+                is_training=True)
             _, loss_value = sess.run([train_op, loss], feed_dict=fd)
             assert not np.isnan(loss_value), 'Loss value is NaN'
             total_loss += loss_value
