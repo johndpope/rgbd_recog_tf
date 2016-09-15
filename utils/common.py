@@ -17,8 +17,27 @@ def early_stopping(old_val, new_val, patience_count, tolerance=1e-2, patience_li
 
 
 def load_images(lst, data_dir, ext, classes):
-    images = []
-    labels = []
+    N = len(lst)
+    IMG_S = 227 # TODO: make it flexible
+    images = np.zeros((N,IMG_S,IMG_S,3), dtype=np.uint8)
+    labels = np.zeros((N,len(classes)), dtype=np.float32)
+
+    lim = 10
+    for i in range(N):
+        # read image
+        img = cv2.imread(os.path.join(data_dir, lst[i]+ext))
+        img = img[np.newaxis, ...]
+        images[i] = img
+
+        # parse label
+        loc = classes.index(lst[i].split('/')[0])
+        labels[i,loc] = 1.0
+        
+        percent = int(100.0*i/N)
+        if percent == lim:
+            print '    Loaded %d / %d' % (i, N)
+            lim += 10
+    '''
     for i in lst:
         img = cv2.imread(os.path.join(data_dir, i+ext))
         img = img[np.newaxis, ...]
@@ -34,4 +53,8 @@ def load_images(lst, data_dir, ext, classes):
             labels = bar
         else:
             labels = np.concatenate((labels, bar), axis=0)
+
+        if int(100.0*labels.shape[0]/N) % 10 == 0 and (1.0*labels.shape[0]/N)>0.1:
+            print '    Loaded %d / %d' % (labels.shape[0], N)
+    '''
     return images, labels

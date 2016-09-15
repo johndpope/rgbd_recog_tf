@@ -4,3 +4,4 @@
 models/bvlc_alexnet.npy
 summary/*
 checkpoints/*
+backup/*

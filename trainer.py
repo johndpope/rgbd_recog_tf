@@ -28,9 +28,19 @@ def placeholder_inputs(batch_size):
     return images_ph, labels_ph, keep_prob_ph
 
 
-def fill_feed_dict(all_data, all_labels, start_idx, images_ph, labels_ph, keep_prob_ph, is_training):
+def next_batch(indices, start_idx):
+    N = indices.shape[0]
+    if start_idx+FLAGS.batch_size > N:
+        stop_idx = N
+    else:
+        stop_idx = start_idx+FLAGS.batch_size
+    return stop_idx
+
+
+def fill_feed_dict(img_batch, lbl_batch, images_ph, labels_ph, keep_prob_ph, is_training):
     """Fills the feed_dict for training the given step
     """
+    '''
     N = all_data.shape[0]
     if start_idx+FLAGS.batch_size > N:
         stop_idx = N
@@ -39,48 +49,57 @@ def fill_feed_dict(all_data, all_labels, start_idx, images_ph, labels_ph, keep_p
 
     img = all_data[start_idx:stop_idx]
     lbl = all_labels[start_idx:stop_idx]
+    '''
 
-    if img.shape[0] < FLAGS.batch_size: # pad the remainder with zeros
-        M = FLAGS.batch_size - img.shape[0]
-        img = np.pad(img, ((0,M),(0,0),(0,0),(0,0)), 'constant', constant_values=0)
-        lbl = np.pad(lbl, ((0,M),(0,0)), 'constant', constant_values=0)
+    if img_batch.shape[0] < FLAGS.batch_size: # pad the remainder with zeros
+        M = FLAGS.batch_size - img_batch.shape[0]
+        img_batch = np.pad(img_batch, ((0,M),(0,0),(0,0),(0,0)), 'constant', constant_values=0)
+        lbl_batch = np.pad(lbl_batch, ((0,M),(0,0)), 'constant', constant_values=0)
 
     if is_training:
-        feed_dict = {images_ph: img, labels_ph: lbl, keep_prob_ph: 0.5}
+        feed_dict = {images_ph: img_batch, labels_ph: lbl_batch, keep_prob_ph: 0.5}
     else:
-        feed_dict = {images_ph: img, labels_ph: lbl, keep_prob_ph: 1.0}
-    return feed_dict, stop_idx
+        feed_dict = {images_ph: img_batch, labels_ph: lbl_batch, keep_prob_ph: 1.0}
+    return feed_dict
 
 
 def do_eval(sess, logits, eval_correct, images_ph, labels_ph, keep_prob_ph, all_data, all_labels):
     true_count, start_idx = 0, 0
+    num_samples = all_data.shape[0]
+    indices = np.random.permutation(num_samples)
+    while start_idx != num_samples:
+        stop_idx = next_batch(indices, start_idx)
+        batch_idx = indices[start_idx: stop_idx]
 
-    while start_idx != all_data.shape[0]:
-        fd, start_idx = fill_feed_dict(
-            all_data, all_labels, start_idx, 
+        fd = fill_feed_dict(
+            all_data[batch_idx], all_labels[batch_idx], 
             images_ph, labels_ph, keep_prob_ph, 
             is_training=False)
         true_count += sess.run(eval_correct, feed_dict=fd)
+        start_idx = stop_idx
 
     precision = true_count*1.0 / num_samples
-    print '  Num samples:%d Num correct:%d Precision:%0.04f' % (num_samples, true_count, precision)
+    print '    Num-samples:%d   Num-correct:%d   Precision:%0.04f' % (num_samples, true_count, precision)
     return precision
 
 
 #=========================================================================================
 def run_training(tag):
     # load data
-    print 'Loading data...'
+    print 'Loading AlexNet...'
     net_data = np.load(cfg.PTH_WEIGHT_ALEX).item()
+    print 'Loading lists...'
     with open(cfg.PTH_TRAIN_LST, 'r') as f: train_lst = f.read().splitlines()
     with open(cfg.PTH_EVAL_LST, 'r') as f: eval_lst = f.read().splitlines()
     if tag == 'rgb':
         ext = cfg.EXT_RGB
     elif tag == 'dep':
         ext = cfg.EXT_D
+    print 'Loading training data...'
     train_data, train_labels = common.load_images(train_lst, cfg.DIR_DATA, ext, cfg.CLASSES)
-    eval_data, eval_labels = common.load_images(train_lst, cfg.DIR_DATA, ext, cfg.CLASSES)
-
+    print 'Loading validation data...'
+    eval_data, eval_labels = common.load_images(eval_lst, cfg.DIR_DATA, ext, cfg.CLASSES)
+    num_train = train_data.shape[0]
 
     # tensorflow variables and operations
     print 'Preparing tensorflow...'
@@ -109,23 +128,27 @@ def run_training(tag):
     for step in range(FLAGS.max_iter):
         # training phase----------------------------------------------
         start_time = time.time()
-        #np.random.shuffle(using_lst)
 
-        # shuffle training data
-        z = zip(train_data, train_labels)
-        np.random.shuffle(z)
-        train_data, train_labels = zip(*z)
+        # shuffle indices
+        indices = np.random.permutation(num_train)
+        #train_data = train_data[p]
+        #train_labels = train_labels[p]
 
         # train by batches
         total_loss, start_idx = 0, 0
-        while start_idx != train_data.shape[0]:
-            fd, start_idx = fill_feed_dict(
-                train_data, train_labe, start_idx, 
+        while start_idx != num_train:
+            stop_idx = next_batch(indices, start_idx)
+            batch_idx = indices[start_idx: stop_idx]
+
+            fd = fill_feed_dict(
+                train_data[batch_idx], train_labels[batch_idx], 
                 images_ph, labels_ph, keep_prob_ph,
                 is_training=True)
             _, loss_value = sess.run([train_op, loss], feed_dict=fd)
             assert not np.isnan(loss_value), 'Loss value is NaN'
+
             total_loss += loss_value
+            start_idx = stop_idx
 
         duration = time.time() - start_time
 
@@ -145,10 +168,10 @@ def run_training(tag):
             checkpoint_file = os.path.join(cfg.DIR_CKPT, tag)
             saver.save(sess, checkpoint_file, global_step=step)
 
-            print ' Training data eval:'
+            print '  Training data eval:'
             do_eval(sess, logits, eval_correct, images_ph, labels_ph, keep_prob_ph, train_lst, tag)
 
-            print ' Validation data eval:'
+            print '  Validation data eval:'
             precision = do_eval(sess, logits, eval_correct, images_ph, labels_ph, keep_prob_ph, eval_lst, tag)
 
             # early stopping
