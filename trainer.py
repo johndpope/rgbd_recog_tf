@@ -131,8 +131,6 @@ def run_training(tag):
 
         # shuffle indices
         indices = np.random.permutation(num_train)
-        #train_data = train_data[p]
-        #train_labels = train_labels[p]
 
         # train by batches
         total_loss, start_idx = 0, 0
@@ -169,10 +167,10 @@ def run_training(tag):
             saver.save(sess, checkpoint_file, global_step=step)
 
             print '  Training data eval:'
-            do_eval(sess, logits, eval_correct, images_ph, labels_ph, keep_prob_ph, train_lst, tag)
+            do_eval(sess, logits, eval_correct, images_ph, labels_ph, keep_prob_ph, train_data, train_labels)
 
             print '  Validation data eval:'
-            precision = do_eval(sess, logits, eval_correct, images_ph, labels_ph, keep_prob_ph, eval_lst, tag)
+            precision = do_eval(sess, logits, eval_correct, images_ph, labels_ph, keep_prob_ph, eval_data, eval_labels)
 
             # early stopping
             to_stop, patience_count = common.early_stopping(old_precision, precision, patience_count)
@@ -186,7 +184,7 @@ def run_training(tag):
 #=========================================================================================
 def main(argv=None):
     with tf.Graph().as_default():
-        run_training(tag='rgb')
+        #run_training(tag='rgb')
         run_training(tag='dep')
 
 

@@ -1,0 +1,51 @@
+Step 0: loss = 90471.067 (2323.497 sec)
+  Training data eval:
+    Num-samples:139106   Num-correct:135182   Precision:0.9718
+  Validation data eval:
+    Num-samples:34229   Num-correct:25560   Precision:0.7467
+Step 1: loss = 14206.436 (2276.365 sec)
+Step 2: loss = 7678.774 (2291.458 sec)
+Step 3: loss = 4995.055 (2309.896 sec)
+Step 4: loss = 3618.140 (2325.957 sec)
+Step 5: loss = 2843.875 (2306.199 sec)
+  Training data eval:
+    Num-samples:139106   Num-correct:139021   Precision:0.9994
+  Validation data eval:
+    Num-samples:34229   Num-correct:26631   Precision:0.7780
+Step 6: loss = 2307.445 (2342.737 sec)
+Step 7: loss = 1960.021 (2345.342 sec)
+Step 8: loss = 1705.837 (2342.552 sec)
+Step 9: loss = 1520.028 (2347.162 sec)
+Step 10: loss = 1407.218 (2365.281 sec)
+  Training data eval:
+    Num-samples:139106   Num-correct:139083   Precision:0.9998
+  Validation data eval:
+    Num-samples:34229   Num-correct:26727   Precision:0.7808
+Step 11: loss = 1366.213 (2359.922 sec)
+Step 12: loss = 1293.925 (2361.245 sec)
+Step 13: loss = 1158.387 (2361.879 sec)
+Step 14: loss = 1118.462 (2365.283 sec)
+Step 15: loss = 1077.917 (2367.101 sec)
+  Training data eval:
+    Num-samples:139106   Num-correct:139092   Precision:0.9999
+  Validation data eval:
+    Num-samples:34229   Num-correct:26598   Precision:0.7771
+Step 16: loss = 1052.766 (2372.897 sec)
+Step 17: loss = 1018.807 (2380.790 sec)
+Step 18: loss = 1029.134 (2378.409 sec)
+Step 19: loss = 942.845 (2375.645 sec)
+Step 20: loss = 906.171 (2380.701 sec)
+  Training data eval:
+    Num-samples:139106   Num-correct:139098   Precision:0.9999
+  Validation data eval:
+    Num-samples:34229   Num-correct:26732   Precision:0.7810
+Step 21: loss = 911.302 (2422.939 sec)
+Step 22: loss = 925.321 (2377.496 sec)
+Step 23: loss = 881.891 (2384.531 sec)
+Step 24: loss = 890.771 (2378.393 sec)
+Step 25: loss = 896.281 (2390.545 sec)
+  Training data eval:
+    Num-samples:139106   Num-correct:139093   Precision:0.9999
+  Validation data eval:
+    Num-samples:34229   Num-correct:27004   Precision:0.7889
+Early stopping...
