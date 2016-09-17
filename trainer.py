@@ -19,6 +19,16 @@ tf.app.flags.DEFINE_integer('checkpoint_frequency', 5, """How often to evaluate 
 
 #=========================================================================================
 def placeholder_inputs(batch_size):
+	"""Create placeholders for tensorflow with some specific batch_size
+
+	Args:
+		batch_size: size of each batch
+
+	Returns:
+		images_ph: 4D tensor of shape [batch_size, image_size, image_size, 3]
+		labels_ph: 2D tensor of shape [batch_size, num_classes]
+		keep_prob_ph: 1D tensor for the keep_probability (for dropout during training)
+	"""
     images_ph = tf.placeholder(tf.float32, shape=(batch_size, FLAGS.img_s, FLAGS.img_s, 3), 
             name='images_placeholder') 
     labels_ph = tf.placeholder(tf.float32, shape=(batch_size, FLAGS.n_classes),
@@ -38,19 +48,20 @@ def next_batch(indices, start_idx):
 
 
 def fill_feed_dict(img_batch, lbl_batch, images_ph, labels_ph, keep_prob_ph, is_training):
-    """Fills the feed_dict for training the given step
+    """Fills the feed_dict. If the batch has fewer samples than the placeholder, it is padded
+    with zeros.
+
+    Args:
+    	img_batch: 4D numpy array of shape [batch_size, image_size, image_size, 3]
+    	lbl_batch: 2D numpy array of shape [batch_size, num_classes]
+    	images_ph: 4D tensor of shape [batch_size, image_size, image_size, 3]
+    	labels_ph: 2D tensor of shape [batch_size, num_classes]
+		keep_prob_ph: 1D tensor for the keep_probability (for dropout during training)
+		is_training: True or False. If True, keep_prob = 0.5, 1.0 otherwise
+
+	Returns:
+		feed_dict: feed dictionary
     """
-    '''
-    N = all_data.shape[0]
-    if start_idx+FLAGS.batch_size > N:
-        stop_idx = N
-    else:
-        stop_idx = start_idx+FLAGS.batch_size
-
-    img = all_data[start_idx:stop_idx]
-    lbl = all_labels[start_idx:stop_idx]
-    '''
-
     if img_batch.shape[0] < FLAGS.batch_size: # pad the remainder with zeros
         M = FLAGS.batch_size - img_batch.shape[0]
         img_batch = np.pad(img_batch, ((0,M),(0,0),(0,0),(0,0)), 'constant', constant_values=0)
@@ -167,10 +178,16 @@ def run_training(tag):
             saver.save(sess, checkpoint_file, global_step=step)
 
             print '  Training data eval:'
-            do_eval(sess, logits, eval_correct, images_ph, labels_ph, keep_prob_ph, train_data, train_labels)
+            do_eval(
+            	sess, logits, eval_correct, 
+            	images_ph, labels_ph, keep_prob_ph, 
+            	train_data, train_labels)
 
             print '  Validation data eval:'
-            precision = do_eval(sess, logits, eval_correct, images_ph, labels_ph, keep_prob_ph, eval_data, eval_labels)
+            precision = do_eval(
+            	sess, logits, eval_correct, 
+            	images_ph, labels_ph, keep_prob_ph, 
+            	eval_data, eval_labels)
 
             # early stopping
             to_stop, patience_count = common.early_stopping(old_precision, precision, patience_count)
