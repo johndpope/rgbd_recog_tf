@@ -37,7 +37,7 @@ def conv(input, kernel, biases, k_h, k_w, c_o, s_h, s_w, padding='VALID', group=
     return result
 
 
-def inference(images, net_data, keep_prob):
+def inference(images, net_data, keep_prob, tag=''):
     """Build the inference for one single channel.
 
     Args:
@@ -48,9 +48,11 @@ def inference(images, net_data, keep_prob):
     Returns:
         logits:
     """
+    tag += '_'
+
     # conv-1 layer
     ## conv(11,11,96,4,4,padding='VALID',name='conv1')
-    with tf.name_scope('conv1') as scope:
+    with tf.name_scope(tag+'conv1') as scope:
         conv1W = tf.Variable(net_data['conv1'][0], name='weight')
         conv1b = tf.Variable(net_data['conv1'][1], name='biases')
         conv1_in = conv(images, conv1W, conv1b, 11, 11, 96, 4, 4, padding='SAME', group=1)
@@ -63,7 +65,7 @@ def inference(images, net_data, keep_prob):
 
     # conv-2 layer
     ## conv(5,5,256,1,1,group=2,name='conv2')
-    with tf.name_scope('conv2') as scope:
+    with tf.name_scope(tag+'conv2') as scope:
         conv2W = tf.Variable(net_data['conv2'][0], name='weight')
         conv2b = tf.Variable(net_data['conv2'][1], name='biases')
         conv2_in = conv(maxpool1, conv2W, conv2b, 5, 5, 256, 1, 1, padding='SAME', group=2)
@@ -76,7 +78,7 @@ def inference(images, net_data, keep_prob):
 
     # conv-3 layer
     ## conv(3,3,384,1,1,name='conv3')
-    with tf.name_scope('conv2') as scope:
+    with tf.name_scope(tag+'conv2') as scope:
         conv3W = tf.Variable(net_data['conv3'][0], name='weight')
         conv3b = tf.Variable(net_data['conv3'][1], name='biases')
         conv3_in = conv(maxpool2, conv3W, conv3b, 3, 3, 384, 1, 1, padding='SAME', group=1)
@@ -85,7 +87,7 @@ def inference(images, net_data, keep_prob):
 
     # conv-4 layer
     ## conv(3,3,384,1,1,group=2,name='conv4')
-    with tf.name_scope('conv4') as scope:
+    with tf.name_scope(tag+'conv4') as scope:
         conv4W = tf.Variable(net_data['conv4'][0], name='weight')
         conv4b = tf.Variable(net_data['conv4'][1], name='biases')
         conv4_in = conv(conv3, conv4W, conv4b, 3, 3, 384, 1, 1, padding='SAME', group=2)
@@ -94,7 +96,7 @@ def inference(images, net_data, keep_prob):
 
     # conv-5 layer
     ## conv(3,3,256,1,1,group=2,name='conv5')
-    with tf.name_scope('conv5') as scope:
+    with tf.name_scope(tag+'conv5') as scope:
         conv5W = tf.Variable(net_data['conv5'][0], name='weight')
         conv5b = tf.Variable(net_data['conv5'][1], name='biases')
         conv5_in = conv(conv4, conv5W, conv5b, 3, 3, 256, 1, 1, padding='SAME', group=2)
@@ -105,7 +107,7 @@ def inference(images, net_data, keep_prob):
 
     # fc6 layer
     ## fc(4096, name='fc6')
-    with tf.name_scope('fc6') as scope:
+    with tf.name_scope(tag+'fc6') as scope:
         fc6W = tf.Variable(net_data['fc6'][0], name='weight')
         fc6b = tf.Variable(net_data['fc6'][1], name='biases')
         fc6_in = tf.reshape(maxpool5, [FLAGS.batch_size, int(np.prod(maxpool5.get_shape()[1:]))])
@@ -115,7 +117,7 @@ def inference(images, net_data, keep_prob):
 
     # fc7 layer
     ## fc(4096, name='fc7')
-    with tf.name_scope('fc7') as scope:
+    with tf.name_scope(tag+'fc7') as scope:
         fc7W = tf.Variable(net_data['fc7'][0], name='weight')
         fc7b = tf.Variable(net_data['fc7'][1], name='biases')
         fc7 = tf.nn.relu_layer(fc6_drop, fc7W, fc7b, name=scope)
@@ -124,7 +126,7 @@ def inference(images, net_data, keep_prob):
 
     # fc8 layer - classifier
     ## fc(1000, relu=False, name='fc8')
-    with tf.name_scope('fc8') as scope:
+    with tf.name_scope(tag+'fc8') as scope:
         # do not use net_data as we have differenet number of classes here
         #fc8W = tf.Variable(net_data['fc8'][0], name='weight')
         #fc8b = tf.Variable(net_data['fc8'][1], name='biases')
@@ -145,7 +147,7 @@ def inference(images, net_data, keep_prob):
     return logits
 
 
-def loss(logits, labels):
+def loss(logits, labels, tag):
     """Return the loss as categorical cross-entropy
 
     Args:
@@ -155,6 +157,7 @@ def loss(logits, labels):
     Returns:
         loss: categorical crossentropy loss
     """
+    tag += '_'
     #L = -tf.reduce_sum(labels * tf.log(logits), reduction_indices=1)
     #loss = tf.reduce_sum(L, reduction_indices=0, name='loss')
 
@@ -162,10 +165,10 @@ def loss(logits, labels):
     loss = tf.reduce_sum(L, reduction_indices=0, name='loss')
 
     # regularize fully connected layers
-    with tf.variable_scope('fc7'):
+    with tf.variable_scope(tag+'fc7'):
         fc7W = tf.get_variable('weight', [4096,4096], dtype=tf.float32)
         fc7b = tf.get_variable('biases', [4096], dtype=tf.float32)
-    with tf.variable_scope('fc8'):
+    with tf.variable_scope(tag+'fc8'):
         fc8W = tf.get_variable('weight', [4096,FLAGS.n_classes], dtype=tf.float32)
         fc8b = tf.get_variable('biases', [FLAGS.n_classes], dtype=tf.float32)
 

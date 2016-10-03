@@ -14,25 +14,23 @@ tf.app.flags.DEFINE_integer('img_s', cfg.IMG_S, """"Size of a square image.""")
 tf.app.flags.DEFINE_integer('n_classes', 51, """Number of classes.""")
 tf.app.flags.DEFINE_float('learning_rate', 1e-3, """"Learning rate for training models.""")
 tf.app.flags.DEFINE_integer('summary_frequency', 1, """How often to write summary.""")
-tf.app.flags.DEFINE_integer('checkpoint_frequency', 5, """How often to evaluate and write checkpoint.""")
+tf.app.flags.DEFINE_integer('checkpoint_frequency', 3, """How often to evaluate and write checkpoint.""")
 
 
 #=========================================================================================
 def placeholder_inputs(batch_size):
-	"""Create placeholders for tensorflow with some specific batch_size
+    """Create placeholders for tensorflow with some specific batch_size
 
-	Args:
-		batch_size: size of each batch
+    Args:
+        batch_size: size of each batch
 
-	Returns:
-		images_ph: 4D tensor of shape [batch_size, image_size, image_size, 3]
-		labels_ph: 2D tensor of shape [batch_size, num_classes]
-		keep_prob_ph: 1D tensor for the keep_probability (for dropout during training)
-	"""
-    images_ph = tf.placeholder(tf.float32, shape=(batch_size, FLAGS.img_s, FLAGS.img_s, 3), 
-            name='images_placeholder') 
-    labels_ph = tf.placeholder(tf.float32, shape=(batch_size, FLAGS.n_classes),
-            name='labels_placeholder')
+    Returns:
+        images_ph: 4D tensor of shape [batch_size, image_size, image_size, 3]
+        labels_ph: 2D tensor of shape [batch_size, num_classes]
+        keep_prob_ph: 1D tensor for the keep_probability (for dropout during training)
+    """
+    images_ph = tf.placeholder(tf.float32, shape=(batch_size, FLAGS.img_s, FLAGS.img_s, 3), name='images_placeholder') 
+    labels_ph = tf.placeholder(tf.float32, shape=(batch_size, FLAGS.n_classes), name='labels_placeholder')
     keep_prob_ph = tf.placeholder(tf.float32, shape=(), name='keep_prob_placeholder')
 
     return images_ph, labels_ph, keep_prob_ph
@@ -52,15 +50,15 @@ def fill_feed_dict(img_batch, lbl_batch, images_ph, labels_ph, keep_prob_ph, is_
     with zeros.
 
     Args:
-    	img_batch: 4D numpy array of shape [batch_size, image_size, image_size, 3]
-    	lbl_batch: 2D numpy array of shape [batch_size, num_classes]
-    	images_ph: 4D tensor of shape [batch_size, image_size, image_size, 3]
-    	labels_ph: 2D tensor of shape [batch_size, num_classes]
-		keep_prob_ph: 1D tensor for the keep_probability (for dropout during training)
-		is_training: True or False. If True, keep_prob = 0.5, 1.0 otherwise
+        img_batch: 4D numpy array of shape [batch_size, image_size, image_size, 3]
+        lbl_batch: 2D numpy array of shape [batch_size, num_classes]
+        images_ph: 4D tensor of shape [batch_size, image_size, image_size, 3]
+        labels_ph: 2D tensor of shape [batch_size, num_classes]
+        keep_prob_ph: 1D tensor for the keep_probability (for dropout during training)
+        is_training: True or False. If True, keep_prob = 0.5, 1.0 otherwise
 
-	Returns:
-		feed_dict: feed dictionary
+    Returns:
+        feed_dict: feed dictionary
     """
     if img_batch.shape[0] < FLAGS.batch_size: # pad the remainder with zeros
         M = FLAGS.batch_size - img_batch.shape[0]
@@ -116,8 +114,8 @@ def run_training(tag):
     print 'Preparing tensorflow...'
     images_ph, labels_ph, keep_prob_ph = placeholder_inputs(FLAGS.batch_size)
 
-    logits = model.inference(images_ph, net_data, keep_prob_ph)
-    loss = model.loss(logits, labels_ph)
+    logits = model.inference(images_ph, net_data, keep_prob_ph, tag)
+    loss = model.loss(logits, labels_ph, tag)
     train_op = model.training(loss)
     eval_correct = model.evaluation(logits, labels_ph)
     init_op = tf.initialize_all_variables()
@@ -179,15 +177,15 @@ def run_training(tag):
 
             print '  Training data eval:'
             do_eval(
-            	sess, logits, eval_correct, 
-            	images_ph, labels_ph, keep_prob_ph, 
-            	train_data, train_labels)
+                sess, logits, eval_correct, 
+                images_ph, labels_ph, keep_prob_ph, 
+                train_data, train_labels)
 
             print '  Validation data eval:'
             precision = do_eval(
-            	sess, logits, eval_correct, 
-            	images_ph, labels_ph, keep_prob_ph, 
-            	eval_data, eval_labels)
+                sess, logits, eval_correct, 
+                images_ph, labels_ph, keep_prob_ph, 
+                eval_data, eval_labels)
 
             # early stopping
             to_stop, patience_count = common.early_stopping(old_precision, precision, patience_count)
@@ -201,8 +199,8 @@ def run_training(tag):
 #=========================================================================================
 def main(argv=None):
     with tf.Graph().as_default():
-        #run_training(tag='rgb')
-        run_training(tag='dep')
+        run_training(tag='rgb')
+        #run_training(tag='dep')
 
 
 if __name__ == '__main__':
