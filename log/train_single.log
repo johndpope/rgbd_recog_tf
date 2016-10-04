@@ -1,0 +1,146 @@
+I tensorflow/stream_executor/dso_loader.cc:108] successfully opened CUDA library libcublas.so locally
+I tensorflow/stream_executor/dso_loader.cc:108] successfully opened CUDA library libcudnn.so locally
+I tensorflow/stream_executor/dso_loader.cc:108] successfully opened CUDA library libcufft.so locally
+I tensorflow/stream_executor/dso_loader.cc:108] successfully opened CUDA library libcuda.so locally
+I tensorflow/stream_executor/dso_loader.cc:108] successfully opened CUDA library libcurand.so locally
+Loading AlexNet...
+Loading lists...
+Loading training data...
+    Loaded 13911 / 139106
+    Loaded 27822 / 139106
+    Loaded 41732 / 139106
+    Loaded 55643 / 139106
+    Loaded 69553 / 139106
+    Loaded 83464 / 139106
+    Loaded 97375 / 139106
+    Loaded 111285 / 139106
+    Loaded 125196 / 139106
+Loading validation data...
+    Loaded 3423 / 34229
+    Loaded 6846 / 34229
+    Loaded 10269 / 34229
+    Loaded 13692 / 34229
+    Loaded 17115 / 34229
+    Loaded 20538 / 34229
+    Loaded 23961 / 34229
+    Loaded 27384 / 34229
+    Loaded 30807 / 34229
+Preparing tensorflow...
+I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:924] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+I tensorflow/core/common_runtime/gpu/gpu_init.cc:102] Found device 0 with properties:
+name: Tesla K40c
+major: 3 minor: 5 memoryClockRate (GHz) 0.745
+pciBusID 0000:02:00.0
+Total memory: 11.17GiB
+Free memory: 11.10GiB
+I tensorflow/core/common_runtime/gpu/gpu_init.cc:126] DMA: 0
+I tensorflow/core/common_runtime/gpu/gpu_init.cc:136] 0:   Y
+I tensorflow/core/common_runtime/gpu/gpu_device.cc:806] Creating TensorFlow device (/gpu:0) -> (device: 0, name: Tesla K40c, pci bus id: 0000:02:00.0)
+Start the training loop...
+Step 0: loss = 44063.686 (1835.465 sec)
+  Training data eval:
+    Num-samples:139106   Num-correct:139022   Precision:0.9994
+  Validation data eval:
+    Num-samples:34229   Num-correct:26147   Precision:0.7639
+Step 1: loss = 1192.626 (1788.044 sec)
+Step 2: loss = 946.165 (1791.281 sec)
+Step 3: loss = 820.481 (1791.757 sec)
+  Training data eval:
+    Num-samples:139106   Num-correct:139106   Precision:1.0000
+  Validation data eval:
+    Num-samples:34229   Num-correct:26552   Precision:0.7757
+Step 4: loss = 792.270 (1791.571 sec)
+Step 5: loss = 779.485 (1791.379 sec)
+Step 6: loss = 747.886 (1791.486 sec)
+  Training data eval:
+    Num-samples:139106   Num-correct:139106   Precision:1.0000
+  Validation data eval:
+    Num-samples:34229   Num-correct:26716   Precision:0.7805
+Step 7: loss = 747.017 (1792.267 sec)
+Step 8: loss = 741.869 (1791.753 sec)
+Step 9: loss = 737.506 (1793.534 sec)
+  Training data eval:
+    Num-samples:139106   Num-correct:139106   Precision:1.0000
+  Validation data eval:
+    Num-samples:34229   Num-correct:26556   Precision:0.7758
+Step 10: loss = 741.611 (1793.872 sec)
+Step 11: loss = 735.282 (1792.822 sec)
+Step 12: loss = 742.607 (1792.124 sec)
+  Training data eval:
+    Num-samples:139106   Num-correct:139106   Precision:1.0000
+  Validation data eval:
+    Num-samples:34229   Num-correct:26421   Precision:0.7719
+Step 13: loss = 731.608 (1792.496 sec)
+Step 14: loss = 727.113 (1795.958 sec)
+Step 15: loss = 721.768 (1792.299 sec)
+  Training data eval:
+    Num-samples:139106   Num-correct:139106   Precision:1.0000
+  Validation data eval:
+    Num-samples:34229   Num-correct:26544   Precision:0.7755
+Early stopping...
+Loading AlexNet...
+Loading lists...
+Loading training data...
+    Loaded 13911 / 139106
+    Loaded 27822 / 139106
+    Loaded 41732 / 139106
+    Loaded 55643 / 139106
+    Loaded 69553 / 139106
+    Loaded 83464 / 139106
+    Loaded 97375 / 139106
+    Loaded 111285 / 139106
+    Loaded 125196 / 139106
+Loading validation data...
+    Loaded 3423 / 34229
+    Loaded 6846 / 34229
+    Loaded 10269 / 34229
+    Loaded 13692 / 34229
+    Loaded 17115 / 34229
+    Loaded 20538 / 34229
+    Loaded 23961 / 34229
+    Loaded 27384 / 34229
+    Loaded 30807 / 34229
+Preparing tensorflow...
+I tensorflow/core/common_runtime/gpu/gpu_device.cc:806] Creating TensorFlow device (/gpu:0) -> (device: 0, name: Tesla K40c, pci bus id: 0000:02:00.0)
+Start the training loop...
+Step 0: loss = 87943.677 (1900.189 sec)
+  Training data eval:
+    Num-samples:139106   Num-correct:134942   Precision:0.9701
+  Validation data eval:
+    Num-samples:34229   Num-correct:25508   Precision:0.7452
+Step 1: loss = 12880.074 (1847.534 sec)
+Step 2: loss = 6690.136 (1849.323 sec)
+Step 3: loss = 4476.128 (1852.809 sec)
+  Training data eval:
+    Num-samples:139106   Num-correct:138843   Precision:0.9981
+  Validation data eval:
+    Num-samples:34229   Num-correct:26683   Precision:0.7795
+Step 4: loss = 3126.523 (1860.723 sec)
+Step 5: loss = 2624.440 (1869.283 sec)
+Step 6: loss = 2165.326 (1861.030 sec)
+  Training data eval:
+    Num-samples:139106   Num-correct:139028   Precision:0.9994
+  Validation data eval:
+    Num-samples:34229   Num-correct:26669   Precision:0.7791
+Step 7: loss = 1844.956 (1860.385 sec)
+Step 8: loss = 1628.101 (1860.481 sec)
+Step 9: loss = 1420.001 (1862.269 sec)
+  Training data eval:
+    Num-samples:139106   Num-correct:139083   Precision:0.9998
+  Validation data eval:
+    Num-samples:34229   Num-correct:26865   Precision:0.7849
+Step 10: loss = 1327.740 (1860.485 sec)
+Step 11: loss = 1207.971 (1864.269 sec)
+Step 12: loss = 1150.767 (1863.001 sec)
+  Training data eval:
+    Num-samples:139106   Num-correct:139091   Precision:0.9999
+  Validation data eval:
+    Num-samples:34229   Num-correct:26872   Precision:0.7851
+Step 13: loss = 1100.633 (1861.547 sec)
+Step 14: loss = 1061.810 (1862.215 sec)
+Step 15: loss = 1036.815 (1863.072 sec)
+  Training data eval:
+    Num-samples:139106   Num-correct:139095   Precision:0.9999
+  Validation data eval:
+    Num-samples:34229   Num-correct:26871   Precision:0.7850
+Early stopping...
