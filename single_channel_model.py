@@ -46,7 +46,7 @@ def inference(images, net_data, keep_prob, tag=''):
         keep_prob: Tensor, 0.5 if training, 1.0 otherwise
 
     Returns:
-        logits:
+        prob: softmax result
     """
     tag += '_'
 
@@ -144,8 +144,7 @@ def inference(images, net_data, keep_prob, tag=''):
     # prob
     ## softmax(name='prob')
     prob = tf.nn.softmax(fc8, name='prob')
-    logits = tf.log(tf.clip_by_value(prob, 1e-10, 1.0), name='logits')
-    return logits
+    return prob
 
 
 def loss(prob, labels, tag):
@@ -162,6 +161,7 @@ def loss(prob, labels, tag):
     #L = -tf.reduce_sum(labels * tf.log(logits), reduction_indices=1)
     #loss = tf.reduce_sum(L, reduction_indices=0, name='loss')
 
+    logits = tf.log(tf.clip_by_value(prob, 1e-10, 1.0), name='logits')
     L = -tf.reduce_sum(labels * logits, reduction_indices=1)
     loss = tf.reduce_sum(L, reduction_indices=0, name='loss')
 
@@ -205,16 +205,16 @@ def training(loss, learning_rate=None):
     return train_op
 
 
-def evaluation(logits, labels):
-    """Find the number of correct classification (top logits among classes), based on labels
+def evaluation(prob, labels):
+    """Find the number of correct classification (top prob among classes), based on labels
 
     Args:
-        logits: results of model's inference
+        prob: results of model's inference
         labels: 2D Tensor [batch_size, n_classes], 1 if object in that class, 0 otherwise
 
     Returns:
         Number of correct classification
     """
     id_labels = tf.argmax(labels, dimension=1) # convert from binary sequences to class id
-    correct = tf.nn.in_top_k(logits, id_labels, 1)
+    correct = tf.nn.in_top_k(prob, id_labels, 1)
     return tf.reduce_sum(tf.cast(correct, tf.int32))
