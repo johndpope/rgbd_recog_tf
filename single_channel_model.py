@@ -143,15 +143,16 @@ def inference(images, net_data, keep_prob, tag=''):
 
     # prob
     ## softmax(name='prob')
-    logits = tf.nn.softmax(fc8, name='prob')
+    prob = tf.nn.softmax(fc8, name='prob')
+    logits = tf.log(tf.clip_by_value(prob, 1e-10, 1.0), name='logits')
     return logits
 
 
-def loss(logits, labels, tag):
+def loss(prob, labels, tag):
     """Return the loss as categorical cross-entropy
 
     Args:
-        logits: results from inference
+        prob: results from inference
         labels: 2D Tensor [batch_size, n_classes], 1 if object in that class, 0 otherwise
 
     Returns:
@@ -161,7 +162,7 @@ def loss(logits, labels, tag):
     #L = -tf.reduce_sum(labels * tf.log(logits), reduction_indices=1)
     #loss = tf.reduce_sum(L, reduction_indices=0, name='loss')
 
-    L = -tf.reduce_sum(labels * tf.log(tf.clip_by_value(logits, 1e-10, 1.0)), reduction_indices=1)
+    L = -tf.reduce_sum(labels * logits, reduction_indices=1)
     loss = tf.reduce_sum(L, reduction_indices=0, name='loss')
 
     # regularize fully connected layers

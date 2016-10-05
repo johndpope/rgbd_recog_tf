@@ -25,6 +25,6 @@ CLASSES         = open(PTH_DICT, 'r').read().splitlines()
 # Parameters
 IMG_S           = 227 # size of a square image
 
-# Extensions
+# Extensions of RGBD dataset
 EXT_RGB         = '_crop.png'
 EXT_D           = '_depthcrop.png'
