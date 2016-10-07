@@ -9,9 +9,8 @@ FLAGS = tf.app.flags.FLAGS
 
 # alias functions
 conv = base_model.conv
-loss = base_model.loss
 training = base_model.training
-
+evaluation = base_model.evaluation
 
 def _extract_feature(images, model, keep_prob, prefix, batch_size):
     # conv-1 layer
@@ -73,12 +72,10 @@ def _extract_feature(images, model, keep_prob, prefix, batch_size):
     return feature
 
 
-def inference(rgb_img, dep_img, rgb_model, dep_model, keep_prob, tag):
+def inference(rgb_img, dep_img, rgb_model, dep_model, keep_prob, tag='fus'):
     tag += '_'
-    #batch_size = FLAGS.batch_size # TODO
-    #n_classes = FLAGS.n_classes
-    n_classes = 51
-    batch_size = 400 # TODO
+    batch_size = FLAGS.batch_size
+    n_classes = FLAGS.n_classes
     
     rgb_feat = _extract_feature(rgb_img, rgb_model, keep_prob, 'rgb_', batch_size)
     dep_feat = _extract_feature(dep_img, dep_model, keep_prob, 'dep_', batch_size)
@@ -102,10 +99,36 @@ def inference(rgb_img, dep_img, rgb_model, dep_model, keep_prob, tag):
     # prob
     ## softmax(name='prob')
     prob = tf.nn.softmax(classifier, name='prob')
+    return prob
+
+
+def loss(prob, labels, tag='fus'):
+    def _get_partial_regularizer(scope_name, w_shape, b_shape):
+        with tf.variable_scope(scope_name):
+            w = tf.get_variable('weight', w_shape, dtype=tf.float32)
+            b = tf.get_variable('biases', b_shape, dtype=tf.float32)
+
+        # compute l2 loss
+        w_l2 = tf.nn.l2_loss(w)
+        b_l2 = tf.nn.l2_loss(b)
+
+        return w_l2 + b_l2
+
+    tag += '_'
     logits = tf.log(tf.clip_by_value(prob, 1e-10, 1.0), name='logits')
-    return logits
+    L = -tf.reduce_sum(labels * logits, reduction_indices=1)
+    loss = tf.reduce_sum(L, reduction_indices=0, name='loss')
+
+    # regularize fully connected layers
+    regularizers = _get_partial_regularizer('rgb_fc7', [4096,4096], [4096]) + \
+            _get_partial_regularizer('dep_fc7', [4096,4096], [4096]) + \
+            _get_partial_regularizer('fus_fc1_fus', [4096*2,4096], [4096]) + \
+            _get_partial_regularizer('fus_class', [4096,FLAGS.n_classes], [FLAGS.n_classes])
+    loss += 5e-4 * regularizers
+    return loss
 
 
+'''
 if __name__== '__main__':
     rgb_model = np.load(os.path.join(cfg.DIR_MODEL, 'rgb_model.npy')).item()
     dep_model = np.load(os.path.join(cfg.DIR_MODEL, 'dep_model.npy')).item()
@@ -113,3 +136,4 @@ if __name__== '__main__':
     dep_img = tf.Variable(np.random.random((400,227,227,3)), dtype=tf.float32, name='dep_img')
     keep_prob = tf.Variable(1.0)
     inference(rgb_img, dep_img, rgb_model, dep_model, keep_prob, tag='fus')
+'''

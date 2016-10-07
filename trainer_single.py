@@ -72,7 +72,7 @@ def fill_feed_dict(img_batch, lbl_batch, images_ph, labels_ph, keep_prob_ph, is_
     return feed_dict
 
 
-def do_eval(sess, logits, eval_correct, images_ph, labels_ph, keep_prob_ph, all_data, all_labels):
+def do_eval(sess, prob, eval_correct, images_ph, labels_ph, keep_prob_ph, all_data, all_labels):
     true_count, start_idx = 0, 0
     num_samples = all_data.shape[0]
     indices = np.random.permutation(num_samples)
@@ -99,7 +99,7 @@ def run_training(tag):
     net_data = np.load(cfg.PTH_WEIGHT_ALEX).item()
     print 'Loading lists...'
     with open(cfg.PTH_TRAIN_LST, 'r') as f: train_lst = f.read().splitlines()
-    with open(cfg.PTH_EVAL_LST, 'r') as f: eval_lst = f.read().splitlines()
+    with open(cfg.PTH_EVAL_LST,  'r') as f: eval_lst  = f.read().splitlines()
     if tag == 'rgb':
         ext = cfg.EXT_RGB
     elif tag == 'dep':
@@ -107,17 +107,17 @@ def run_training(tag):
     print 'Loading training data...'
     train_data, train_labels = common.load_images(train_lst, cfg.DIR_DATA, ext, cfg.CLASSES)
     print 'Loading validation data...'
-    eval_data, eval_labels = common.load_images(eval_lst, cfg.DIR_DATA, ext, cfg.CLASSES)
+    eval_data,  eval_labels  = common.load_images(eval_lst,  cfg.DIR_DATA, ext, cfg.CLASSES)
     num_train = train_data.shape[0]
 
     # tensorflow variables and operations
     print 'Preparing tensorflow...'
     images_ph, labels_ph, keep_prob_ph = placeholder_inputs(FLAGS.batch_size)
 
-    logits = model.inference(images_ph, net_data, keep_prob_ph, tag)
-    loss = model.loss(logits, labels_ph, tag)
+    prob = model.inference(images_ph, net_data, keep_prob_ph, tag)
+    loss = model.loss(prob, labels_ph, tag)
     train_op = model.training(loss)
-    eval_correct = model.evaluation(logits, labels_ph)
+    eval_correct = model.evaluation(prob, labels_ph)
     init_op = tf.initialize_all_variables()
 
     # tensorflow monitor
@@ -177,13 +177,13 @@ def run_training(tag):
 
             print '  Training data eval:'
             do_eval(
-                sess, logits, eval_correct, 
+                sess, prob, eval_correct, 
                 images_ph, labels_ph, keep_prob_ph, 
                 train_data, train_labels)
 
             print '  Validation data eval:'
             precision = do_eval(
-                sess, logits, eval_correct, 
+                sess, prob, eval_correct, 
                 images_ph, labels_ph, keep_prob_ph, 
                 eval_data, eval_labels)
 

@@ -3,6 +3,15 @@ import numpy as np
 import cv2
 
 
+def next_batch(indices, start_idx, batch_size):
+    N = indices.shape[0]
+    if start_idx+batch_size > N:
+        stop_idx = N
+    else:
+        stop_idx = start_idx+batch_size
+    return stop_idx
+
+
 def early_stopping(old_val, new_val, patience_count, tolerance=1e-2, patience_limit=3):
     to_stop = False
     improvement = new_val - old_val
@@ -37,24 +46,4 @@ def load_images(lst, data_dir, ext, classes):
         if percent == lim:
             print '    Loaded %d / %d' % (i, N)
             lim += 10
-    '''
-    for i in lst:
-        img = cv2.imread(os.path.join(data_dir, i+ext))
-        img = img[np.newaxis, ...]
-        if images == []:
-            images = img
-        else:
-            images = np.concatenate((images, img), axis=0)
-
-        foo = classes.index(i.split('/')[0])
-        bar = np.zeros((1,len(classes)))
-        bar[0,foo] = 1.0
-        if labels == []:
-            labels = bar
-        else:
-            labels = np.concatenate((labels, bar), axis=0)
-
-        if int(100.0*labels.shape[0]/N) % 10 == 0 and (1.0*labels.shape[0]/N)>0.1:
-            print '    Loaded %d / %d' % (labels.shape[0], N)
-    '''
     return images, labels
