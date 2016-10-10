@@ -42,7 +42,8 @@ def fill_feed_dict(rgb_batch, dep_batch, lbl_batch, rgb_ph, dep_ph, labels_ph, k
 def do_eval(sess, eval_correct, rgb_ph, dep_ph, labels_ph, keep_prob_ph, all_rgb, all_dep, all_labels):
     true_count, start_idx = 0, 0
     num_samples = all_labels.shape[0]
-    indices = np.random.permutation(num_samples)
+    #indices = np.random.permutation(num_samples)
+    indices = np.arange(num_samples)
     while start_idx != num_samples:
         stop_idx = common.next_batch(indices, start_idx, FLAGS.batch_size)
         batch_idx = indices[start_idx: stop_idx]
@@ -51,7 +52,10 @@ def do_eval(sess, eval_correct, rgb_ph, dep_ph, labels_ph, keep_prob_ph, all_rgb
                 all_rgb[batch_idx], all_dep[batch_idx], all_labels[batch_idx],
                 rgb_ph, dep_ph, labels_ph, keep_prob_ph,
                 is_training=False)
-        true_count = true_count*1.0 / num_samples
+        true_count += sess.run(eval_correct, feed_dict=fd)
+        start_idx = stop_idx
+        
+    precision = true_count*1.0 / num_samples
     print '    Num-samples:%d   Num-correct:%d   Precision:%0.04f' % (num_samples, true_count, precision)
     return precision
 
