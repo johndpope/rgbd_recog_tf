@@ -9,7 +9,7 @@ from utils import common
 # model parameters
 FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_integer('max_iter', 500, """Maximum number of training iteration.""")
-tf.app.flags.DEFINE_integer('batch_size', 400, """Numer of images to process in a batch.""")
+tf.app.flags.DEFINE_integer('batch_size', 200, """Numer of images to process in a batch.""")
 tf.app.flags.DEFINE_integer('img_s', cfg.IMG_S, """"Size of a square image.""")
 tf.app.flags.DEFINE_integer('n_classes', 51, """Number of classes.""")
 tf.app.flags.DEFINE_float('learning_rate', 1e-3, """"Learning rate for training models.""")
@@ -41,14 +41,14 @@ def fill_feed_dict(rgb_batch, dep_batch, lbl_batch, rgb_ph, dep_ph, labels_ph, k
 
 def do_eval(sess, eval_correct, rgb_ph, dep_ph, labels_ph, keep_prob_ph, all_rgb, all_dep, all_labels):
     true_count, start_idx = 0, 0
-    num_samples = all_data.shape[0]
+    num_samples = all_labels.shape[0]
     indices = np.random.permutation(num_samples)
     while start_idx != num_samples:
         stop_idx = common.next_batch(indices, start_idx, FLAGS.batch_size)
         batch_idx = indices[start_idx: stop_idx]
         
         fd = fill_feed_dict(
-                all_rgb[batch_idx], all_dep[batch_idx], all_label[batch_idx],
+                all_rgb[batch_idx], all_dep[batch_idx], all_labels[batch_idx],
                 rgb_ph, dep_ph, labels_ph, keep_prob_ph,
                 is_training=False)
         true_count = true_count*1.0 / num_samples

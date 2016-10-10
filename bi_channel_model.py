@@ -40,31 +40,31 @@ def _extract_feature(images, model, keep_prob, prefix, batch_size):
 
     # conv-4 layer
     with tf.name_scope(prefix+'conv4') as scope:
-        conv4W = tf.Variable(model[prefix+'conv4W'], name='weight')
-        conv4b = tf.Variable(model[prefix+'conv4b'], name='biases')
+        conv4W = tf.Variable(model[prefix+'conv4W'], trainable=False, name='weight')
+        conv4b = tf.Variable(model[prefix+'conv4b'], trainable=False, name='biases')
         conv4_in = conv(conv3, conv4W, conv4b, 3, 3, 384, 1, 1, padding='SAME', group=2)
         conv4 = tf.nn.relu(conv4_in, name=scope)
 
     # conv-5 layer
     with tf.name_scope(prefix+'conv5') as scope:
-        conv5W = tf.Variable(model[prefix+'conv5W'], name='weight')
-        conv5b = tf.Variable(model[prefix+'conv5b'], name='biases')
+        conv5W = tf.Variable(model[prefix+'conv5W'], trainable=False, name='weight')
+        conv5b = tf.Variable(model[prefix+'conv5b'], trainable=False, name='biases')
         conv5_in = conv(conv4, conv5W, conv5b, 3, 3, 256, 1, 1, padding='SAME', group=2)
         conv5 = tf.nn.relu(conv5_in, name=scope)
     maxpool5 = tf.nn.max_pool(conv5, ksize=[1,3,3,1], strides=[1,2,2,1], padding='VALID', name=prefix+'pool5')
 
     # fc6 layer
     with tf.name_scope(prefix+'fc6') as scope:
-        fc6W = tf.Variable(model[prefix+'fc6W'], name='weight')
-        fc6b = tf.Variable(model[prefix+'fc6b'], name='biases')
+        fc6W = tf.Variable(model[prefix+'fc6W'], trainable=False, name='weight')
+        fc6b = tf.Variable(model[prefix+'fc6b'], trainable=False, name='biases')
         fc6_in = tf.reshape(maxpool5, [batch_size, int(np.prod(maxpool5.get_shape()[1:]))])
         fc6 = tf.nn.relu_layer(fc6_in, fc6W, fc6b, name=scope)
         fc6_drop = tf.nn.dropout(fc6, keep_prob=keep_prob, name='drop')
 
     # fc7 layer
     with tf.name_scope(prefix+'fc7') as scope:
-        fc7W = tf.Variable(model[prefix+'fc7W'], name='weight')
-        fc7b = tf.Variable(model[prefix+'fc7b'], name='biases')
+        fc7W = tf.Variable(model[prefix+'fc7W'], trainable=False, name='weight')
+        fc7b = tf.Variable(model[prefix+'fc7b'], trainable=False, name='biases')
         fc7 = tf.nn.relu_layer(fc6_drop, fc7W, fc7b, name=scope)
         fc7_drop = tf.nn.dropout(fc7, keep_prob=keep_prob, name='drop')
                 
