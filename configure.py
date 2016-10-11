@@ -20,6 +20,7 @@ PTH_WEIGHT_ALEX = os.path.join(DIR_MODEL, 'bvlc_alexnet.npy') # AlexNet's pretra
 PTH_MEAN_IMG    = os.path.join(DIR_MODEL, 'ilsvrc_2012_mean.npy') # mean image of imagenet dataset
 PTH_RGB_MODEL   = os.path.join(DIR_MODEL, 'rgb_model.npy') # rgb model trained in phase 1
 PTH_DEP_MODEL   = os.path.join(DIR_MODEL, 'dep_model.npy') # depth model trained in phase 1
+PTH_FUS_MODEL   = os.path.join(DIR_MODEL, 'fus_model.npy') # fusion model trained in phase 2
 
 # Classes
 CLASSES         = open(PTH_DICT, 'r').read().splitlines()

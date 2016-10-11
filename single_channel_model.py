@@ -1,9 +1,11 @@
 import os, ipdb
 import tensorflow as tf
 import numpy as np
+from utils.tfcommon import *
 
 FLAGS = tf.app.flags.FLAGS
 
+'''
 def conv(input, kernel, biases, k_h, k_w, c_o, s_h, s_w, padding='VALID', group=1):
     """Wrapper for TensorFlow's 2D convolution
 
@@ -35,7 +37,7 @@ def conv(input, kernel, biases, k_h, k_w, c_o, s_h, s_w, padding='VALID', group=
     #result = tf.reshape(tf.nn.bias_add(conv, biases), conv.get_shape().as_list())
     result = tf.nn.bias_add(conv, biases)
     return result
-
+'''
 
 def inference(images, net_data, keep_prob, tag=''):
     """Build the inference for one single channel.
@@ -177,7 +179,7 @@ def loss(prob, labels, tag):
     loss += 5e-4 * regularizers
     return loss
 
-
+'''
 def training(loss, learning_rate=None):
     """Sets up the training ops.
 
@@ -218,3 +220,5 @@ def evaluation(prob, labels):
     id_labels = tf.argmax(labels, dimension=1) # convert from binary sequences to class id
     correct = tf.nn.in_top_k(prob, id_labels, 1)
     return tf.reduce_sum(tf.cast(correct, tf.int32))
+'''
+

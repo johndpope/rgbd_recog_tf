@@ -81,7 +81,11 @@ def convert(tag, path):
     model[tag+'fc8W'] = sess.run(var_lst[14])
     model[tag+'fc8b'] = sess.run(var_lst[15])
 
-    np.save(os.path.join(cfg.DIR_MODEL, tag+'model.npy'), model)
+    #np.save(os.path.join(cfg.DIR_MODEL, tag+'model.npy'), model)
+    if tag == 'rgb_':
+        np.save(cfg.PTH_RGB_MODEL, model)
+    elif tag == 'dep_':
+        np.save(cfg.PTH_DEP_MODEL, model)
     return
 
 

@@ -1,16 +1,11 @@
-import os
+import os, ipdb
 import tensorflow as tf
 import numpy as np
-import single_channel_model as base_model
 import configure as cfg
-import ipdb
+from utils.tfcommon import *
 
 FLAGS = tf.app.flags.FLAGS
 
-# alias functions
-conv = base_model.conv
-training = base_model.training
-evaluation = base_model.evaluation
 
 def _extract_feature(images, model, keep_prob, prefix, batch_size):
     # conv-1 layer
