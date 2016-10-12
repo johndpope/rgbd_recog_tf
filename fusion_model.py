@@ -6,8 +6,19 @@ from utils.tfcommon import *
 
 FLAGS = tf.app.flags.FLAGS
 
-
 def _extract_feature(images, model, keep_prob, prefix, batch_size):
+    ''' Extract feature using a pretrained weights from single channel model
+
+    Args:
+        images: 4D tensor: [batch_size, image_size, image_size, 3]
+        model: pretrained single_channel_model (either color or depth)
+        keep_prob: keeping probality for training
+        prefix: 'rgb_' or 'dep_'
+        batch_size: size of each batch
+
+    Returns:
+        feature: extracted feature
+    '''
     # conv-1 layer
     with tf.name_scope(prefix+'conv1') as scope:
         conv1W = tf.Variable(model[prefix+'conv1W'], trainable=False, name='weight')

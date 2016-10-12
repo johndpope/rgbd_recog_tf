@@ -2,6 +2,7 @@ import os
 import tensorflow as tf
 import numpy as np
 
+FLAGS = tf.app.flags.FLAGS
 
 def conv(input, kernel, biases, k_h, k_w, c_o, s_h, s_w, padding='VALID', group=1):
     """Wrapper for TensorFlow's 2D convolution

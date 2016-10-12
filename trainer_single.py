@@ -36,15 +36,6 @@ def placeholder_inputs(batch_size):
     return images_ph, labels_ph, keep_prob_ph
 
 
-def next_batch(indices, start_idx):
-    N = indices.shape[0]
-    if start_idx+FLAGS.batch_size > N:
-        stop_idx = N
-    else:
-        stop_idx = start_idx+FLAGS.batch_size
-    return stop_idx
-
-
 def fill_feed_dict(img_batch, lbl_batch, images_ph, labels_ph, keep_prob_ph, is_training):
     """Fills the feed_dict. If the batch has fewer samples than the placeholder, it is padded
     with zeros.
@@ -72,12 +63,26 @@ def fill_feed_dict(img_batch, lbl_batch, images_ph, labels_ph, keep_prob_ph, is_
     return feed_dict
 
 
-def do_eval(sess, prob, eval_correct, images_ph, labels_ph, keep_prob_ph, all_data, all_labels):
+def do_eval(sess, eval_correct, images_ph, labels_ph, keep_prob_ph, all_data, all_labels):
+    ''' Run one evaluation against the full epoch of data
+
+    Args:
+        sess: the session in which the model has been trained
+        eval_correct: the tensor that returns the number of correct predictions
+        images_ph: tensor place holder for images
+        labels_ph: tensor place holder for labels
+        keep_prob_ph: tensor place holder for keep_prob
+        all_data: all loaded images
+        all_labels: all labels corresponding to all_images
+
+    Return
+        precision: percentage of correct recognition
+    '''
     true_count, start_idx = 0, 0
     num_samples = all_data.shape[0]
-    indices = np.random.permutation(num_samples)
+    #indices = np.random.permutation(num_samples)
     while start_idx != num_samples:
-        stop_idx = next_batch(indices, start_idx)
+        stop_idx = common.next_batch(indices, start_idx, FLAGS.batch_size)
         batch_idx = indices[start_idx: stop_idx]
 
         fd = fill_feed_dict(
@@ -144,7 +149,7 @@ def run_training(tag):
         # train by batches
         total_loss, start_idx = 0, 0
         while start_idx != num_train:
-            stop_idx = next_batch(indices, start_idx)
+            stop_idx = common.next_batch(indices, start_idx, FLAGS.batch_size)
             batch_idx = indices[start_idx: stop_idx]
 
             fd = fill_feed_dict(
@@ -177,13 +182,13 @@ def run_training(tag):
 
             print '  Training data eval:'
             do_eval(
-                sess, prob, eval_correct, 
+                sess, eval_correct, 
                 images_ph, labels_ph, keep_prob_ph, 
                 train_data, train_labels)
 
             print '  Validation data eval:'
             precision = do_eval(
-                sess, prob, eval_correct, 
+                sess, eval_correct, 
                 images_ph, labels_ph, keep_prob_ph, 
                 eval_data, eval_labels)
 

@@ -18,6 +18,17 @@ tf.app.flags.DEFINE_integer('checkpoint_frequency', 3, """How often to evaluate 
 
 #==================================================================================================
 def placeholder_inputs(batch_size):
+    """Create placeholders for tensorflow with some specific batch_size
+
+    Args:
+        batch_size: size of each batch
+
+    Returns:
+        rgb_ph: 4D tensor of shape [batch_size, image_size, image_size, 3]
+        dep_ph: 4D tensor of shape [batch_size, image_size, image_size, 3]
+        labels_ph: 2D tensor of shape [batch_size, num_classes]
+        keep_prob_ph: 1D tensor for the keep_probability (for dropout during training)
+    """
     rgb_ph = tf.placeholder(tf.float32, shape=(batch_size, FLAGS.img_s, FLAGS.img_s, 3), name='rgb_placeholder')
     dep_ph = tf.placeholder(tf.float32, shape=(batch_size, FLAGS.img_s, FLAGS.img_s, 3), name='dep_placeholder')
     labels_ph = tf.placeholder(tf.float32, shape=(batch_size, FLAGS.n_classes), name='labels_placeholder')
@@ -26,6 +37,22 @@ def placeholder_inputs(batch_size):
 
 
 def fill_feed_dict(rgb_batch, dep_batch, lbl_batch, rgb_ph, dep_ph, labels_ph, keep_prob_ph, is_training):
+    """Fills the feed_dict. If the batch has fewer samples than the placeholder, it is padded
+    with zeros.
+
+    Args:
+        rgb_batch: 4D numpy array of shape [batch_size, image_size, image_size, 3]
+        dep_batch: 4D numpy array of shape [batch_size, image_size, image_size, 3]
+        lbl_batch: 2D numpy array of shape [batch_size, num_classes]
+        rgb_ph: tensor place holder for rgb_batch
+        dep_ph: tensor place holder for dep_batch
+        labels_ph: 2D tensor of shape [batch_size, num_classes]
+        keep_prob_ph: 1D tensor for the keep_probability (for dropout during training)
+        is_training: True or False. If True, keep_prob = 0.5, 1.0 otherwise
+
+    Returns:
+        feed_dict: feed dictionary
+    """
     if lbl_batch.shape[0] < FLAGS.batch_size: # zero-padding
         M = FLAGS.batch_size - lbl_batch.shape[0]
         rgb_batch = np.pad(rgb_batch, ((0,M),(0,0),(0,0),(0,0)), 'constant', constant_values=0)
@@ -40,6 +67,22 @@ def fill_feed_dict(rgb_batch, dep_batch, lbl_batch, rgb_ph, dep_ph, labels_ph, k
 
 
 def do_eval(sess, eval_correct, rgb_ph, dep_ph, labels_ph, keep_prob_ph, all_rgb, all_dep, all_labels):
+    ''' Run one evaluation against the full epoch of data
+
+    Args:
+        sess: the session in which the model has been trained
+        eval_correct: the tensor that returns the number of correct predictions
+        rgb_ph: tensor place holder for color images
+        dep_ph: tensor place holder for depth images
+        labels_ph: tensor place holder for labels
+        keep_prob_ph: tensor place holder for keep_prob
+        all_rgb: all loaded color images
+        all_dep: all loaded depth images
+        all_labels: all labels corresponding to all_images
+
+    Return
+        precision: percentage of correct recognition
+    '''
     true_count, start_idx = 0, 0
     num_samples = all_labels.shape[0]
     #indices = np.random.permutation(num_samples)
