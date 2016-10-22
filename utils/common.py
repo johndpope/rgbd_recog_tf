@@ -1,6 +1,11 @@
 import os, sys, glob, ipdb
 import numpy as np
 import cv2
+import configure as cfg
+
+
+IMREAD_COLOR = int(cv2.IMREAD_COLOR)
+IMREAD_UNCHANGED = int(cv2.IMREAD_UNCHANGED)
 
 
 def next_batch(indices, start_idx, batch_size):
@@ -25,9 +30,12 @@ def early_stopping(old_val, new_val, patience_count, tolerance=1e-2, patience_li
     return to_stop, patience_count
 
 
-def load_images(lst, data_dir, ext, classes):
+def parse_label(x, classes):
+    return classes.index(x.split('/')[0])
+
+
+def load_images(lst, data_dir, ext, classes, IMG_S=227):
     N = len(lst)
-    IMG_S = 227 # TODO: make it flexible
     images = np.zeros((N,IMG_S,IMG_S,3), dtype=np.uint8)
     labels = np.zeros((N,len(classes)), dtype=np.float32)
 
@@ -39,11 +47,38 @@ def load_images(lst, data_dir, ext, classes):
         images[i] = img
 
         # parse label
-        loc = classes.index(lst[i].split('/')[0])
-        labels[i,loc] = 1.0
+        labels[i, parse_label(lst[i], classes)] = 1.0
         
         percent = int(100.0*i/N)
         if percent == lim:
             print '    Loaded %d / %d' % (i, N)
             lim += 10
     return images, labels
+
+
+def load_4d(lst, data_dir, classes, IMG_S=227):
+    N = len(lst)
+    rgbd = np.zeros((N, IMG_S, IMG_S, 4), dtype=np.float32)
+
+    lim = 10
+    for i in range(N):
+        # read rgb and d
+        rgb = cv2.imread(os.path.join(data_dir, lst[i]+cfg.EXT_RGB), IMREAD_COLOR)
+        dep = cv2.imread(os.path.join(data_dir, lst[i]+cfg.EXT_D), IMREAD_UNCHANGED)
+        foo = np.concatenate((rgb, dep[..., np.newaxis]), axis=2)
+        rgbd[i] = foo[np.newaxis, ...]
+
+        # parse label
+        labels[i, parse_label(lst[i], classes)] = 1.0
+
+        percent = int(100.0 * i / N)
+        if percent == lim:
+            print '    Loaded %d / %d' %(i, N)
+            lim += 10
+
+    # normalize by batch
+    ipdb.set_trace()
+    rgb_mean = np.mean(rgbd[:,:,:,0:2])
+    rgb_std  = np.std(rfgb[:,:,:,0:2])
+        
+    return rgbd, labels
