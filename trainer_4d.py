@@ -19,7 +19,7 @@ tf.app.flags.DEFINE_integer('checkpoint_frequency', 3, """How often to evaluate 
 
 #=========================================================================================================
 def placeholder_inputs(batch_size):
-    rgbd_ph = tf.placeholder(tf.float32, shape=(batch_size, FLAGS.img_s, FLAGS.img_s, 4), name='rgbd_placeholder')
+    rgbd_ph = tf.placeholder(tf.uint8, shape=(batch_size, FLAGS.img_s, FLAGS.img_s, 4), name='rgbd_placeholder')
     labels_ph = tf.placeholder(tf.float32, shape=(batch_size, FLAGS.n_classes), name='labels_placeholder')
     keep_prob_ph = tf.placeholder(tf.float32, shape=(), name='keep_prob_placeholder')
     return rgbd_ph, labels_ph, keep_prob_ph
@@ -69,8 +69,8 @@ def run_training(tag):
     #train_lst = train_lst[:10]; eval_lst = eval_lst[:10] #TODO
 
     print 'Loading training data...'
-    train_data, train_labels = common.load_4d(train_lst, cfg.DIR_DATA_4D) 
-    eval_data,  eval_labels  = common.load_4d(eval_lst,  cfg.DIR_DATA_4D)
+    train_data, train_labels = common.load_4d(train_lst, cfg.DIR_DATA, cfg.DIR_DATA_RAW) 
+    eval_data,  eval_labels  = common.load_4d(eval_lst,  cfg.DIR_DATA, cfg.DIR_DATA_RAW)
     num_train = train_data.shape[0]
 
     # tensorflow variables and operations

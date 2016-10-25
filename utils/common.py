@@ -56,18 +56,30 @@ def load_images(lst, data_dir, ext, classes, IMG_S=227):
     return images, labels
 
 
-def load_4d(lst, data_dir):
+
+
+from preprocess_4d import resize_dep
+def load_4d(lst, rgb_dir, dep_dir):
     N = len(lst)
-    rgbds = np.zeros((N, cfg.IMG_S, cfg.IMG_S, 4), dtype=np.float32)
+    rgbds = np.zeros((N, cfg.IMG_S, cfg.IMG_S, 4), dtype=np.uint8)
     labels = np.zeros((N, len(cfg.CLASSES)), dtype=np.float32)
 
     lim = 10
     for i in range(N):
         # read rgbd
-        rgbd = np.load(os.path.join(data_dir, lst[i]+cfg.EXT_4D))
-        rgbd[:,:,3] = (rgbd[:,:,3] - cfg.DEP_MIN) / cfg.DEP_MAX * 255.0 # normalize to 0..255
-        rgbd = np.clip(rgbd, 0, 255)
-        rgbds[i] = rgbd[np.newaxis, ...]
+        rgb = cv2.imread(os.path.join(rgb_dir, lst[i]+cfg.EXT_RGB), IMREAD_COLOR)
+        dep = cv2.imread(os.path.join(dep_dir, lst[i]+cfg.EXT_D), IMREAD_UNCHANGED)
+
+        dep = resize_dep(dep)
+        dep = (dep - cfg.DEP_MIN)*1.0 / cfg.DEP_MAX * 255
+        dep = np.clip(0, 255, dep.astype(np.uint8))
+        rgbd = np.concatenate((rgb, dep[..., np.newaxis]), axis=2)
+        rgbds[i] = rgbd[np.newaxis,...]
+
+        #rgbd = np.load(os.path.join(data_dir, lst[i]+cfg.EXT_4D))
+        #rgbd[:,:,3] = (rgbd[:,:,3] - cfg.DEP_MIN) / cfg.DEP_MAX * 255.0 # normalize to 0..255
+        #rgbd = np.clip(rgbd, 0, 255)
+        #rgbds[i] = rgbd[np.newaxis, ...]
 
         # parse label
         labels[i, parse_label(lst[i], cfg.CLASSES)] = 1.0
