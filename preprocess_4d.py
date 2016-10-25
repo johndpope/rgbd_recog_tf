@@ -4,6 +4,7 @@ import numpy as np
 import cv2
 import configure as cfg
 
+
 IMREAD_COLOR = int(cv2.IMREAD_COLOR)
 IMREAD_UNCHANGED = int(cv2.IMREAD_UNCHANGED)
 
@@ -136,37 +137,37 @@ def resize():
 def analyze():
     with open(cfg.PTH_TRAIN_LST,'r') as f: train_lst = f.read().splitlines()
     N = len(train_lst)
-    N = 10
 
+    '''
+    # max depth
+    import sys
+    dep_min, dep_max = sys.maxsize, 0.0
+    for i in range(N):
+        rgbd = np.load(os.path.join(cfg.DIR_DATA_4D, train_lst[i]+cfg.EXT_4D))
+        dep_min = min(dep_min, rgbd[:,:,3].min())
+        dep_max = max(dep_max, rgbd[:,:,3].max())
+    print dep_min, dep_max
+    '''
 
+    # mean
     if os.path.exists(cfg.PTH_RGBD_MEAN):
         rgbd_mean = np.load(cfg.PTH_RGBD_MEAN)
     else:
-        rgb_mean = np.zeros([cfg.IMG_S, cfg.IMG_S, 3])
-        dep_mean = np.zeros([cfg.IMG_S, cfg.IMG_S])
+        rgbd_mean = np.zeros([cfg.IMG_S, cfg.IMG_S, 4])
         for i in range(N):
-            rgb = cv2.imread(os.path.join(cfg.DIR_DATA_4D, train_lst[i]+cfg.EXT_RGB), IMREAD_COLOR)
-            dep = cv2.imread(os.path.join(cfg.DIR_DATA_4D, train_lst[i]+cfg.EXT_D), IMREAD_UNCHANGED)
-            rgb_mean += rgb.astype(np.float32)/N
-            dep_mean += dep.astype(np.float32)/N
-
-        ipdb.set_trace()
-        rgbd_mean = np.concatenate((rgb_mean, dep_mean[..., np.newaxis]), axis=2)
+            rgbd = np.load(os.path.join(cfg.DIR_DATA_4D, train_lst[i]+cfg.EXT_4D))
+            rgbd_mean += rgbd.astype(np.float32) / N
         np.save(cfg.PTH_RGBD_MEAN, rgbd_mean)
-           
-    ipdb.set_trace()
-    rgb_var = np.zeros([cfg.IMG_S, cfg.IMG_S, 3])
-    dep_var = np.zeros([cfg.IMG_S, cfg.IMG_S])
+    
+    # variance
+    rgbd_var = np.zeros([cfg.IMG_S, cfg.IMG_S, 4])
     for i in range(N):
-        rgb = cv2.imread(os.path.join(cfg.DIR_DATA_4D, train_lst[i]+cfg.EXT_RGB), IMREAD_COLOR)
-        dep = cv2.imread(os.path.join(cfg.DIR_DATA_4D, train_lst[i]+cfg.EXT_D), IMREAD_UNCHANGED)
-        rgb_var += (rgb.astype(np.float32)-rgbd_mean[:,:,:3])**2 / N
-        dep_var += (dep.astype(np.float32)-rgbd_mean[:,:,3])**2 / N
-    rgbd_var = np.concatenate((rgb_var, dep_var[..., np.newaxis]), axis=2)
-    np.save(cfg.PTH_RGBD_VAR, rgb_var)
+        rgbd = np.load(os.path.join(cfg.DIR_DATA_4D, train_lst[i]+cfg.EXT_4D))
+        rgbd_var += (rgbd.astype(np.float32) - rgbd_mean)**2 / N
+    np.save(cfg.PTH_RGBD_VAR, rgbd_var)
     return 
 
 
 if __name__ == '__main__':
     resize()
-    #analyze()
+    analyze()

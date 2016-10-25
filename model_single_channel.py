@@ -46,7 +46,7 @@ def inference(images, net_data, keep_prob, tag=''):
 
     # conv-3 layer
     ## conv(3,3,384,1,1,name='conv3')
-    with tf.name_scope(tag+'conv2') as scope:
+    with tf.name_scope(tag+'conv3') as scope:
         conv3W = tf.Variable(net_data['conv3'][0], name='weight')
         conv3b = tf.Variable(net_data['conv3'][1], name='biases')
         conv3_in = conv(maxpool2, conv3W, conv3b, 3, 3, 384, 1, 1, padding='SAME', group=1)

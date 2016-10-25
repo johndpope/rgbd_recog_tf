@@ -56,29 +56,26 @@ def load_images(lst, data_dir, ext, classes, IMG_S=227):
     return images, labels
 
 
-def load_4d(lst, data_dir, classes, IMG_S=227):
+def load_4d(lst, data_dir):
     N = len(lst)
-    rgbd = np.zeros((N, IMG_S, IMG_S, 4), dtype=np.float32)
+    rgbds = np.zeros((N, cfg.IMG_S, cfg.IMG_S, 4), dtype=np.float32)
+    labels = np.zeros((N, len(cfg.CLASSES)), dtype=np.float32)
 
     lim = 10
     for i in range(N):
-        # read rgb and d
-        rgb = cv2.imread(os.path.join(data_dir, lst[i]+cfg.EXT_RGB), IMREAD_COLOR)
-        dep = cv2.imread(os.path.join(data_dir, lst[i]+cfg.EXT_D), IMREAD_UNCHANGED)
-        foo = np.concatenate((rgb, dep[..., np.newaxis]), axis=2)
-        rgbd[i] = foo[np.newaxis, ...]
+        # read rgbd
+        rgbd = np.load(os.path.join(data_dir, lst[i]+cfg.EXT_4D))
+        rgbd[:,:,3] = (rgbd[:,:,3] - cfg.DEP_MIN) / cfg.DEP_MAX * 255.0 # normalize to 0..255
+        rgbd = np.clip(rgbd, 0, 255)
+        rgbds[i] = rgbd[np.newaxis, ...]
 
         # parse label
-        labels[i, parse_label(lst[i], classes)] = 1.0
+        labels[i, parse_label(lst[i], cfg.CLASSES)] = 1.0
 
+        # check progress
         percent = int(100.0 * i / N)
         if percent == lim:
             print '    Loaded %d / %d' %(i, N)
             lim += 10
-
-    # normalize by batch
-    ipdb.set_trace()
-    rgb_mean = np.mean(rgbd[:,:,:,0:2])
-    rgb_std  = np.std(rfgb[:,:,:,0:2])
         
-    return rgbd, labels
+    return rgbds, labels

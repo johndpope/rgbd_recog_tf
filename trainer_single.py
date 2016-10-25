@@ -1,6 +1,6 @@
 import tensorflow as tf
 import numpy as np
-import single_channel_model as model
+import model_single_channel as model
 import os, sys, time, ipdb
 from utils import common
 import configure as cfg 
@@ -105,6 +105,7 @@ def run_training(tag):
     print 'Loading lists...'
     with open(cfg.PTH_TRAIN_LST, 'r') as f: train_lst = f.read().splitlines()
     with open(cfg.PTH_EVAL_LST,  'r') as f: eval_lst  = f.read().splitlines()
+    #train_lst = train_lst[:10]; eval_lst = eval_lst[:10]
     if tag == 'rgb':
         ext = cfg.EXT_RGB
     elif tag == 'dep':

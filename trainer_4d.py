@@ -9,7 +9,7 @@ from utils import common
 # model parameters
 FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_integer('max_iter', 500, """Maximum number of training iteration.""")
-tf.app.flags.DEFINE_integer('batch_size', 200, """Numer of images to process in a batch.""")
+tf.app.flags.DEFINE_integer('batch_size', 400, """Numer of images to process in a batch.""")
 tf.app.flags.DEFINE_integer('img_s', cfg.IMG_S, """"Size of a square image.""")
 tf.app.flags.DEFINE_integer('n_classes', 51, """Number of classes.""")
 tf.app.flags.DEFINE_float('learning_rate', 1e-3, """"Learning rate for training models.""")
@@ -39,7 +39,7 @@ def fill_feed_dict(rgbd_batch, lbl_batch, rgbd_ph, labels_ph, keep_prob_ph, is_t
     return feed_dict
 
 
-def do_eval(sess, eval_correct, rgbd_ph, labels_ph, keep_prob_ph, all_data, all_labels):
+def do_eval(sess, eval_correct, rgbd_ph, labels_ph, keep_prob_ph, all_data, all_labels, logfile=None):
     true_count, start_idx = 0, 0
     num_samples = all_data.shape[0]
 
@@ -53,19 +53,24 @@ def do_eval(sess, eval_correct, rgbd_ph, labels_ph, keep_prob_ph, all_data, all_
                 is_training=False)
         true_count += true_count*1.0 / num_samples
         print '    Num-samples:%d  Num-correct:%d  Precision:%0.04f' % (num_samples, true_count, precision)
+        if logfile is not None:
+            logfile.write('    Num-samples:%d  Num-correct:%d  Precision:%0.04f' % (num_samples, true_count, precision))
     return precision
 
 
 #=========================================================================================================
 def run_training(tag):
+    logfile = open(os.path.join(cfg.DIR_LOG, 'training_'+tag+'.log'), 'w', 0)
+
     # load data
     print 'Loading lists...'
     with open(cfg.PTH_TRAIN_LST, 'r') as f: train_lst = f.read().splitlines()
     with open(cfg.PTH_EVAL_LST,  'r') as f: eval_lst  = f.read().splitlines()
+    #train_lst = train_lst[:10]; eval_lst = eval_lst[:10] #TODO
 
     print 'Loading training data...'
-    train_data, train_labels = common.load_4d(train_lst, cfg.DIR_DATA_RAW, cfg.CLASSES, cfg.IMG_S) 
-    eval_data,  eval_labels  = common.load_4d(eval_lst,  cfg.DIR_DATA_RAW, cfg.CLASSES, cfg.IMG_S)
+    train_data, train_labels = common.load_4d(train_lst, cfg.DIR_DATA_4D) 
+    eval_data,  eval_labels  = common.load_4d(eval_lst,  cfg.DIR_DATA_4D)
     num_train = train_data.shape[0]
 
     # tensorflow variables and operations
@@ -73,7 +78,7 @@ def run_training(tag):
     rgbd_ph, labels_ph, keep_prob_ph = placeholder_inputs(FLAGS.batch_size)
 
     prob = model.inference(rgbd_ph, keep_prob_ph, tag)
-    loss = model.loss(prob. labels_ph, tag)
+    loss = model.loss(prob, labels_ph, tag)
     train_op = model.training(loss)
     eval_correct = model.evaluation(prob, labels_ph)
     init_op = tf.initialize_all_variables()
@@ -96,11 +101,13 @@ def run_training(tag):
         # training phase-------------------------------------------------
         start_time = time.time()
 
+
         # shuffle indices
         indices = np.random.permutation(num_train)
 
         # train by batches
         total_loss, start_idx = 0, 0
+        ipdb.set_trace()
         while start_idx != num_train:
             stop_idx = common.next_batch(indices, start_idx, FLAGS.batch_size)
             batch_idx = indices[start_idx: stop_idx]
@@ -118,11 +125,44 @@ def run_training(tag):
 
 
         # write summary-------------------------------------------------
-        #TODO
+        if step % FLAGS.summary_frequency == 0:
+            print 'Step %d: loss = %.3f (%.3f sec)' % (step, total_loss, duration)
+            logfile.write('Step %d: loss = %.3f (%.3f sec)' % (step, total_loss, duration))
+            summary_str = sess.run(summary, feed_dict=fd)
+            summary_writer.add_summary(summary_str, step)
+            summary_writer.flush()
+        else:
+            print 'Step', step, ' '
+            logfile.write('Step %d ' % step)
 
 
         # write checkpoint----------------------------------------------
-        #TODO
+        if step % FLAGS.checkpoint_frequency == 0 or (step+1) == FLAGS.max_iter:
+            checkpoint_file = os.path.join(cfg.DIR_CKPT, tag)
+            saver.save(sess, checkpoint_file, global_step=step)
+
+            print '  Training data eval:'
+            logfile.write('  Training data eval:')
+            do_eval(
+                    sess, eval_correct,
+                    rgbd_ph, labels_ph, keep_prob_ph,
+                    train_data, train_labels)
+            
+            print '  Validation data eval:'
+            logfile.write('    Validation data eval:')
+            precision = do_eval(
+                    sess, eval_correct,
+                    images_ph, labels_ph, keep_prob_ph,
+                    eval_data, eval_labels)
+
+            # early stopping
+            to_stop, patience_count = common.early_stopping(old_precision, precision, patience_count)
+            old_precision = precision
+            if to_stop:
+                print 'Early stopping...'
+                logfile.write('Early stopping...')
+                break
+    logfile.close()
     return
 
 

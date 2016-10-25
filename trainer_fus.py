@@ -1,6 +1,6 @@
 import tensorflow as tf
 import numpy as np
-import fusion_model as model
+import model_fusion as model
 import os, sys, time, ipdb
 import configure as cfg
 from utils import common
