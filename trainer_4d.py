@@ -70,6 +70,7 @@ def run_training(tag):
 
     print 'Loading training data...'
     train_data, train_labels = common.load_4d(train_lst, cfg.DIR_DATA, cfg.DIR_DATA_RAW) 
+    print 'Loading validation data...'
     eval_data,  eval_labels  = common.load_4d(eval_lst,  cfg.DIR_DATA, cfg.DIR_DATA_RAW)
     num_train = train_data.shape[0]
 
