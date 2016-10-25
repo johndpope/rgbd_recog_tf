@@ -19,7 +19,7 @@ tf.app.flags.DEFINE_integer('checkpoint_frequency', 3, """How often to evaluate 
 
 #=========================================================================================================
 def placeholder_inputs(batch_size):
-    rgbd_ph = tf.placeholder(tf.uint8, shape=(batch_size, FLAGS.img_s, FLAGS.img_s, 4), name='rgbd_placeholder')
+    rgbd_ph = tf.placeholder(tf.float32, shape=(batch_size, FLAGS.img_s, FLAGS.img_s, 4), name='rgbd_placeholder')
     labels_ph = tf.placeholder(tf.float32, shape=(batch_size, FLAGS.n_classes), name='labels_placeholder')
     keep_prob_ph = tf.placeholder(tf.float32, shape=(), name='keep_prob_placeholder')
     return rgbd_ph, labels_ph, keep_prob_ph
