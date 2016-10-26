@@ -53,9 +53,12 @@ def do_eval(sess, eval_correct, rgbd_ph, labels_ph, keep_prob_ph, all_data, all_
                 rgbd_ph, labels_ph, keep_prob_ph,
                 is_training=False)
         true_count += true_count*1.0 / num_samples
-        print '    Num-samples:%d  Num-correct:%d  Precision:%0.04f' % (num_samples, true_count, precision)
-        if logfile is not None:
-            logfile.write('    Num-samples:%d  Num-correct:%d  Precision:%0.04f' % (num_samples, true_count, precision))
+        start_idx = stop_idx
+
+    precision = true_count*1.0 / num_samples
+    print '    Num-samples:%d  Num-correct:%d  Precision:%0.04f' % (num_samples, true_count, precision)
+    if logfile is not None:
+        logfile.write('    Num-samples:%d  Num-correct:%d  Precision:%0.04f' % (num_samples, true_count, precision))
     return precision
 
 
