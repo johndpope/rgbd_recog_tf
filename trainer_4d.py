@@ -9,7 +9,7 @@ from utils import common
 # model parameters
 FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_integer('max_iter', 500, """Maximum number of training iteration.""")
-tf.app.flags.DEFINE_integer('batch_size', 400, """Numer of images to process in a batch.""")
+tf.app.flags.DEFINE_integer('batch_size', 800, """Numer of images to process in a batch.""")
 tf.app.flags.DEFINE_integer('img_s', cfg.IMG_S, """"Size of a square image.""")
 tf.app.flags.DEFINE_integer('n_classes', 51, """Number of classes.""")
 tf.app.flags.DEFINE_float('learning_rate', 1e-3, """"Learning rate for training models.""")
@@ -42,6 +42,7 @@ def fill_feed_dict(rgbd_batch, lbl_batch, rgbd_ph, labels_ph, keep_prob_ph, is_t
 def do_eval(sess, eval_correct, rgbd_ph, labels_ph, keep_prob_ph, all_data, all_labels, logfile=None):
     true_count, start_idx = 0, 0
     num_samples = all_data.shape[0]
+    indices = np.arange(num_samples)
 
     while start_idx != num_samples:
         stop_idx = common.next_batch(indices, start_idx, FLAGS.batch_size)
@@ -102,14 +103,17 @@ def run_training(tag):
         # training phase-------------------------------------------------
         start_time = time.time()
 
-
         # shuffle indices
         indices = np.random.permutation(num_train)
 
         # train by batches
         total_loss, start_idx = 0, 0
-        ipdb.set_trace()
+        lim = 10
         while start_idx != num_train:
+            if start_idx*100.0 / num_train > lim:
+                print 'Trained %d/%d' % (start_idx, num_train)
+                lim += 10
+
             stop_idx = common.next_batch(indices, start_idx, FLAGS.batch_size)
             batch_idx = indices[start_idx: stop_idx]
 

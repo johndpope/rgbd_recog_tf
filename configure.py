@@ -32,7 +32,7 @@ CLASSES         = open(PTH_DICT, 'r').read().splitlines()
 # Parameters
 IMG_S           = 227 # size of a square image
 DEP_MIN         = 0.0
-DEP_MAX         = 2000.0 # because of Kinect
+DEP_MAX         = 4000.0 # because of Kinect
 
 # Extensions of RGBD dataset
 EXT_RGB         = '_crop.png'

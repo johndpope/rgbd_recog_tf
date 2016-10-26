@@ -81,6 +81,7 @@ def do_eval(sess, eval_correct, images_ph, labels_ph, keep_prob_ph, all_data, al
     true_count, start_idx = 0, 0
     num_samples = all_data.shape[0]
     #indices = np.random.permutation(num_samples)
+    indices = np.arange(num_samples)
     while start_idx != num_samples:
         stop_idx = common.next_batch(indices, start_idx, FLAGS.batch_size)
         batch_idx = indices[start_idx: stop_idx]
