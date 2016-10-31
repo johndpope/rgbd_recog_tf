@@ -1,18 +1,18 @@
 import tensorflow as tf
 import numpy as np
-import model_4d as model
 import os, sys, time, ipdb
 import configure as cfg
 from utils import common
+from architectures import model_4d as model
 
 
 # model parameters
 FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_integer('max_iter', 500, """Maximum number of training iteration.""")
-tf.app.flags.DEFINE_integer('batch_size', 800, """Numer of images to process in a batch.""")
+tf.app.flags.DEFINE_integer('batch_size', 400, """Numer of images to process in a batch.""")
 tf.app.flags.DEFINE_integer('img_s', cfg.IMG_S, """"Size of a square image.""")
 tf.app.flags.DEFINE_integer('n_classes', 51, """Number of classes.""")
-tf.app.flags.DEFINE_float('learning_rate', 1e-3, """"Learning rate for training models.""")
+tf.app.flags.DEFINE_float('learning_rate', 1e-1, """"Learning rate for training models.""")
 tf.app.flags.DEFINE_integer('summary_frequency', 1, """How often to write summary.""")
 tf.app.flags.DEFINE_integer('checkpoint_frequency', 3, """How often to evaluate and write checkpoint.""")
 
@@ -67,6 +67,9 @@ def run_training(tag):
     logfile = open(os.path.join(cfg.DIR_LOG, 'training_'+tag+'.log'), 'w', 0)
 
     # load data
+    print 'Loading AlexNet...'
+    net_data = np.load(cfg.PTH_WEIGHT_ALEX).item()
+
     print 'Loading lists...'
     with open(cfg.PTH_TRAIN_LST, 'r') as f: train_lst = f.read().splitlines()
     with open(cfg.PTH_EVAL_LST,  'r') as f: eval_lst  = f.read().splitlines()
@@ -82,7 +85,7 @@ def run_training(tag):
     print 'Preparing tensorflow...'
     rgbd_ph, labels_ph, keep_prob_ph = placeholder_inputs(FLAGS.batch_size)
 
-    prob = model.inference(rgbd_ph, keep_prob_ph, tag)
+    prob = model.inference(rgbd_ph, net_data, keep_prob_ph, tag)
     loss = model.loss(prob, labels_ph, tag)
     train_op = model.training(loss)
     eval_correct = model.evaluation(prob, labels_ph)
@@ -160,11 +163,11 @@ def run_training(tag):
             logfile.write('    Validation data eval:')
             precision = do_eval(
                     sess, eval_correct,
-                    images_ph, labels_ph, keep_prob_ph,
+                    rgbd_ph, labels_ph, keep_prob_ph,
                     eval_data, eval_labels)
 
             # early stopping
-            to_stop, patience_count = common.early_stopping(old_precision, precision, patience_count)
+            to_stop, patience_count = common.early_stopping(old_precision, precision, patience_count, tolerance=1e-3, patience_limit=10)
             old_precision = precision
             if to_stop:
                 print 'Early stopping...'

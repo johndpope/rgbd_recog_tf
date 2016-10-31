@@ -1,9 +1,9 @@
 import tensorflow as tf
 import numpy as np
-import model_single_channel as model
 import os, sys, time, ipdb
 from utils import common
 import configure as cfg 
+from architectures import model_single_channel as model
 
 
 # model parameters

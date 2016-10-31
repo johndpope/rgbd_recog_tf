@@ -2,7 +2,7 @@ import os, ipdb
 import tensorflow as tf
 import numpy as np
 import configure as cfgi
-from utils.tfcommon import *
+from tfcommon import *
 
 FLAGS = tf.app.flags.FLAGS
 

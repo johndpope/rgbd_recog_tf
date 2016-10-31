@@ -1,9 +1,9 @@
 import tensorflow as tf
 import numpy as np
-import model_fusion as model
 import os, sys, time, ipdb
 import configure as cfg
 from utils import common
+from architectures import model_fusion as model
 
 
 # model parameters
