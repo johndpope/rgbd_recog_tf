@@ -83,7 +83,7 @@ def inference(rgbd, net_data, keep_prob, tag=''):
     # conv-1 layer
     ## conv(11,11,96,4,4,padding='VALID',name='conv1')
     with tf.name_scope(tag+'conv1') as scope:
-        init_conv1W = np.concatenate((net_data['conv1'][0], np.random.randn(11,11,1,96)), axis=2)
+        init_conv1W = np.concatenate((net_data['conv1'][0], np.random.randn(11,11,1,96)), axis=2).astype(np.float32)
         conv1W = tf.Variable(init_conv1W, name='weight')
         conv1b = tf.Variable(net_data['conv1'][1], name='biases')
         conv1_in = conv(rgbd, conv1W, conv1b, 11, 11, 96, 4, 4, padding='SAME', group=1)

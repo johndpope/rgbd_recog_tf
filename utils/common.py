@@ -56,10 +56,8 @@ def load_images(lst, data_dir, ext, classes, IMG_S=227):
     return images, labels
 
 
-
-
 from preprocess_4d import resize_dep
-def load_4d(lst, rgb_dir, dep_dir):
+def load_4d(lst, rgb_dir, dep_dir, process_dep=False):
     N = len(lst)
     rgbds = np.zeros((N, cfg.IMG_S, cfg.IMG_S, 4), dtype=np.uint8)
     labels = np.zeros((N, len(cfg.CLASSES)), dtype=np.float32)
@@ -70,13 +68,14 @@ def load_4d(lst, rgb_dir, dep_dir):
         rgb = cv2.imread(os.path.join(rgb_dir, lst[i]+cfg.EXT_RGB), IMREAD_COLOR)
         dep = cv2.imread(os.path.join(dep_dir, lst[i]+cfg.EXT_D), IMREAD_UNCHANGED)
         dep = resize_dep(dep).astype(np.float32)
-        dep = (dep - cfg.DEP_MIN)*1.0 / cfg.DEP_MAX * 255
-        dep = dep.astype(np.uint8)
 
-        #l = np.sum((dep>255).astype(np.int32))
-        #if l > 0: print l, dep.max() #TODO: remove this line
+        if process_dep:
+            dep = (dep - cfg.DEP_MIN)*1.0 / cfg.DEP_MAX * 255
+            dep = dep.astype(np.uint8)
+            #l = np.sum((dep>255).astype(np.int32))
+            #if l > 0: print l, dep.max() #TODO: remove this line
+            dep = np.clip(255, 0, dep)
 
-        dep = np.clip(255, 0, dep)
         rgbd = np.concatenate((rgb, dep[..., np.newaxis]), axis=2)
         rgbds[i] = rgbd[np.newaxis,...]
 

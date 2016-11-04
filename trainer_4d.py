@@ -12,7 +12,7 @@ tf.app.flags.DEFINE_integer('max_iter', 500, """Maximum number of training itera
 tf.app.flags.DEFINE_integer('batch_size', 400, """Numer of images to process in a batch.""")
 tf.app.flags.DEFINE_integer('img_s', cfg.IMG_S, """"Size of a square image.""")
 tf.app.flags.DEFINE_integer('n_classes', 51, """Number of classes.""")
-tf.app.flags.DEFINE_float('learning_rate', 1e-1, """"Learning rate for training models.""")
+tf.app.flags.DEFINE_float('learning_rate', 1e-3, """"Learning rate for training models.""")
 tf.app.flags.DEFINE_integer('summary_frequency', 1, """How often to write summary.""")
 tf.app.flags.DEFINE_integer('checkpoint_frequency', 3, """How often to evaluate and write checkpoint.""")
 
@@ -52,13 +52,13 @@ def do_eval(sess, eval_correct, rgbd_ph, labels_ph, keep_prob_ph, all_data, all_
                 all_data[batch_idx], all_labels[batch_idx],
                 rgbd_ph, labels_ph, keep_prob_ph,
                 is_training=False)
-        true_count += true_count*1.0 / num_samples
+        true_count += sess.run(eval_correct, feed_dict=fd)
         start_idx = stop_idx
 
     precision = true_count*1.0 / num_samples
     print '    Num-samples:%d  Num-correct:%d  Precision:%0.04f' % (num_samples, true_count, precision)
     if logfile is not None:
-        logfile.write('    Num-samples:%d  Num-correct:%d  Precision:%0.04f' % (num_samples, true_count, precision))
+        logfile.write('    Num-samples:%d  Num-correct:%d  Precision:%0.04f\n' % (num_samples, true_count, precision))
     return precision
 
 
@@ -76,9 +76,9 @@ def run_training(tag):
     #train_lst = train_lst[:10]; eval_lst = eval_lst[:10] #TODO
 
     print 'Loading training data...'
-    train_data, train_labels = common.load_4d(train_lst, cfg.DIR_DATA, cfg.DIR_DATA_RAW) 
+    train_data, train_labels = common.load_4d(train_lst, cfg.DIR_DATA, cfg.DIR_DATA_RAW, process_dep=True) 
     print 'Loading validation data...'
-    eval_data,  eval_labels  = common.load_4d(eval_lst,  cfg.DIR_DATA, cfg.DIR_DATA_RAW)
+    eval_data,  eval_labels  = common.load_4d(eval_lst,  cfg.DIR_DATA, cfg.DIR_DATA_RAW, process_dep=True)
     num_train = train_data.shape[0]
 
     # tensorflow variables and operations
@@ -138,13 +138,13 @@ def run_training(tag):
         # write summary-------------------------------------------------
         if step % FLAGS.summary_frequency == 0:
             print 'Step %d: loss = %.3f (%.3f sec)' % (step, total_loss, duration)
-            logfile.write('Step %d: loss = %.3f (%.3f sec)' % (step, total_loss, duration))
+            logfile.write('Step %d: loss = %.3f (%.3f sec)\n' % (step, total_loss, duration))
             summary_str = sess.run(summary, feed_dict=fd)
             summary_writer.add_summary(summary_str, step)
             summary_writer.flush()
         else:
             print 'Step', step, ' '
-            logfile.write('Step %d ' % step)
+            logfile.write('Step %d \n' % step)
 
 
         # write checkpoint----------------------------------------------
@@ -153,25 +153,25 @@ def run_training(tag):
             saver.save(sess, checkpoint_file, global_step=step)
 
             print '  Training data eval:'
-            logfile.write('  Training data eval:')
+            logfile.write('  Training data eval:\n')
             do_eval(
                     sess, eval_correct,
                     rgbd_ph, labels_ph, keep_prob_ph,
-                    train_data, train_labels)
+                    train_data, train_labels, logfile)
             
             print '  Validation data eval:'
-            logfile.write('    Validation data eval:')
+            logfile.write('    Validation data eval:\n')
             precision = do_eval(
                     sess, eval_correct,
                     rgbd_ph, labels_ph, keep_prob_ph,
-                    eval_data, eval_labels)
+                    eval_data, eval_labels, logfile)
 
             # early stopping
-            to_stop, patience_count = common.early_stopping(old_precision, precision, patience_count, tolerance=1e-3, patience_limit=10)
+            to_stop, patience_count = common.early_stopping(old_precision, precision, patience_count)
             old_precision = precision
             if to_stop:
                 print 'Early stopping...'
-                logfile.write('Early stopping...')
+                logfile.write('Early stopping...\n')
                 break
     logfile.close()
     return
