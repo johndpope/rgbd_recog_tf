@@ -73,7 +73,7 @@ def colorize_depth(img):
     return res
 
 
-def main():
+def process(dir_input, dir_output):
     # load mean image
     mean_img = np.load(cfg.PTH_MEAN_IMG)
     mean_img = mean_img.transpose(1,2,0)
@@ -82,19 +82,21 @@ def main():
     mean_img = np.float32(mean_img)
 
     # go through the whole dataset
-    classes = os.listdir(cfg.DIR_DATA_RAW) # classes
+    classes = os.listdir(dir_input) # classes
     if '.DS_Store' in classes: classes.remove('.DS_Store')
-    if not os.path.exists(cfg.DIR_DATA): os.mkdir(cfg.DIR_DATA)
+    if not os.path.exists(dir_output): os.mkdir(dir_output)
 
     for a_class in classes:
-        class_pth = os.path.join(cfg.DIR_DATA_RAW, a_class)
+        print a_class
+        class_pth = os.path.join(dir_input, a_class)
         objs = os.listdir(class_pth) # objects
         if '.DS_Store' in objs: objs.remove('.DS_Store')
-        if not os.path.exists(os.path.join(cfg.DIR_DATA, a_class)): os.mkdir(os.path.join(cfg.DIR_DATA, a_class))
+        if not os.path.exists(os.path.join(dir_output, a_class)): os.mkdir(os.path.join(dir_output, a_class))
 
         for obj in objs:
+            print '  ' + obj
             obj_pth = os.path.join(class_pth, obj)
-            obj_pth_out = os.path.join(cfg.DIR_DATA, a_class, obj)
+            obj_pth_out = os.path.join(dir_output, a_class, obj)
             if not os.path.exists(obj_pth_out): os.mkdir(obj_pth_out)
 
             sample_ids = glob.glob1(obj_pth, '*_loc.txt') # samples
@@ -130,4 +132,12 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    #dir_input = cfg.DIR_DATA_RAW
+    #dir_output = cfg.DIR_DATA
+
+    dir_input = cfg.DIR_DATA_EVAL_RAW
+    dir_output = cfg.DIR_DATA_EVAL
+
+    print 'Input directory: %s' % dir_input
+    print 'Output directory: %s' % dir_output
+    process(dir_input, dir_output)

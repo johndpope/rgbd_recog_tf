@@ -7,15 +7,19 @@ DIR_LST         = 'lists'
 DIR_MODEL       = 'models'
 DIR_SUMMARY     = 'summary'
 DIR_LOG         = 'logs'
-DIR_DATA_RAW    = os.path.join(DIR_HOME, 'data', 'rgbd-dataset') #TODO: change accordingly
-DIR_DATA        = os.path.join(DIR_HOME, 'data', 'rgbd-dataset-processed') #TODO: change accordingly
-DIR_DATA_4D     = os.path.join(DIR_HOME, 'data', 'rgbd-dataset-processed4d') #TODO: change accordingly
+
+DIR_DATA_RAW      = os.path.join(DIR_HOME, 'data', 'rgbd-dataset') #TODO: change accordingly
+DIR_DATA          = os.path.join(DIR_HOME, 'data', 'rgbd-dataset-processed') #TODO: change accordingly
+DIR_DATA_4D       = os.path.join(DIR_HOME, 'data', 'rgbd-dataset-processed4d') #TODO: change accordingly
+DIR_DATA_EVAL_RAW = os.path.join(DIR_HOME, 'data', 'rgbd-dataset_eval')
+DIR_DATA_EVAL     = os.path.join(DIR_HOME, 'data', 'rgbd-dataset_eval-processed')
 
 # Lists
-PTH_TRAIN_LST   = os.path.join(DIR_LST, 'train_full.lst')
-PTH_EVAL_LST    = os.path.join(DIR_LST, 'eval_full.lst')
-PTH_TEST_LST    = os.path.join(DIR_LST, 'test_full.lst')
-PTH_DICT        = os.path.join(DIR_LST, 'dictionary.lst')
+PTH_TRAIN_LST        = os.path.join(DIR_LST, 'train.lst')
+PTH_EVAL_LST         = [os.path.join(DIR_LST, 'eval_'+str(trial+1)+'.lst') for trial in range(10)]
+PTH_TESTINSTANCE_IDS = os.path.join(DIR_LST, 'testinstance_ids.txt')
+#PTH_TEST_LST    = os.path.join(DIR_LST, 'test_full.lst')
+PTH_DICT             = os.path.join(DIR_LST, 'dictionary.lst')
 
 # Model
 PTH_WEIGHT_ALEX = os.path.join(DIR_MODEL, 'bvlc_alexnet.npy') # AlexNet's pretrained model
@@ -30,6 +34,7 @@ PTH_RGBD_VAR    = os.path.join(DIR_MODEL, 'rgbd_dataset_var.npy')
 CLASSES         = open(PTH_DICT, 'r').read().splitlines()
 
 # Parameters
+N_TRIALS        = 10
 IMG_S           = 227 # size of a square image
 DEP_MIN         = 0.0
 DEP_MAX         = 4000.0 # because of Kinect

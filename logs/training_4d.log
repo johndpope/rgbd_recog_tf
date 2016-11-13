@@ -113,3 +113,62 @@ Step 66: loss = 689.067 (2165.398 sec)
     Validation data eval:
 Step 67: loss = 680.763 (2021.788 sec)
 Step 68: loss = 679.902 (2019.759 sec)
+Step 69: loss = 679.656 (2020.699 sec)
+  Training data eval:
+    Validation data eval:
+Step 70: loss = 679.865 (2063.693 sec)
+Step 71: loss = 682.248 (2086.829 sec)
+Step 72: loss = 679.479 (2090.059 sec)
+  Training data eval:
+    Validation data eval:
+Step 73: loss = 685.395 (2064.140 sec)
+Step 74: loss = 677.399 (2046.915 sec)
+Step 75: loss = 676.106 (2055.147 sec)
+  Training data eval:
+    Validation data eval:
+Step 76: loss = 672.737 (1911.585 sec)
+Step 77: loss = 674.951 (1895.717 sec)
+Step 78: loss = 677.981 (1896.864 sec)
+  Training data eval:
+    Validation data eval:
+Step 79: loss = 671.744 (1940.021 sec)
+Step 80: loss = 670.867 (2083.176 sec)
+Step 81: loss = 668.600 (1981.510 sec)
+  Training data eval:
+    Validation data eval:
+Step 82: loss = 667.640 (1951.856 sec)
+Step 83: loss = 682.868 (2098.003 sec)
+Step 84: loss = 669.560 (2115.623 sec)
+  Training data eval:
+    Validation data eval:
+Step 85: loss = 673.519 (2096.211 sec)
+Step 86: loss = 665.110 (2172.624 sec)
+Step 87: loss = 663.906 (2244.296 sec)
+  Training data eval:
+    Validation data eval:
+Step 88: loss = 673.197 (2269.695 sec)
+Step 89: loss = 663.484 (2207.051 sec)
+Step 90: loss = 662.456 (2148.116 sec)
+  Training data eval:
+    Validation data eval:
+Step 91: loss = 660.820 (2143.278 sec)
+Step 92: loss = 661.146 (2453.317 sec)
+Step 93: loss = 666.628 (2475.659 sec)
+  Training data eval:
+    Validation data eval:
+Step 94: loss = 662.917 (2467.785 sec)
+Step 95: loss = 661.470 (2461.334 sec)
+Step 96: loss = 657.220 (2532.481 sec)
+  Training data eval:
+    Validation data eval:
+Step 97: loss = 655.821 (2659.502 sec)
+Step 98: loss = 659.512 (2570.164 sec)
+Step 99: loss = 659.792 (2581.799 sec)
+  Training data eval:
+    Validation data eval:
+Step 100: loss = 656.317 (2568.551 sec)
+Step 101: loss = 658.393 (2571.069 sec)
+Step 102: loss = 652.843 (2561.236 sec)
+  Training data eval:
+    Validation data eval:
+Step 103: loss = 651.032 (2597.363 sec)

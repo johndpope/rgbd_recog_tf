@@ -2,8 +2,8 @@ import os, glob, ipdb
 import configure as cfg
 
 
-def make_lists(a_class, objs, file):
-    class_pth = os.path.join(cfg.DIR_DATA_RAW, a_class)
+def make_lists(a_class, objs, parrent_path, file):
+    class_pth = os.path.join(parrent_path, a_class)
     for obj in objs:
         obj_pth = os.path.join(class_pth, obj)
         obj_pth_out = os.path.join(cfg.DIR_DATA, a_class, obj)
@@ -18,6 +18,7 @@ def make_lists(a_class, objs, file):
     return
 
 
+'''
 def main():
     train_f = open(cfg.PTH_TRAIN_LST, 'w')
     eval_f = open(cfg.PTH_EVAL_LST, 'w')
@@ -45,7 +46,56 @@ def main():
     eval_f.close()
     test_f.close()
     return
+'''
 
+
+def make_train_list():
+    train_f = open(cfg.PTH_TRAIN_LST, 'w')
+
+    # go through the whole dataset
+    classes = os.listdir(cfg.DIR_DATA_RAW) # classes
+    if '.DS_Store' in classes: classes.remove('.DS_Store')
+    if not os.path.exists(cfg.DIR_DATA): os.mkdir(cfg.DIR_DATA)
+
+    classes.sort()
+    for a_class in classes:
+        class_pth = os.path.join(cfg.DIR_DATA_RAW, a_class)
+        objs = os.listdir(class_pth) # objects
+        if '.DS_Store' in objs: objs.remove('.DS_Store')
+        objs.sort()
+        make_lists(a_class, objs, cfg.DIR_DATA_RAW, train_f)
+
+    train_f.close()
+    return
+
+
+def make_eval_list():
+    testinstance_f = open(cfg.PTH_TESTINSTANCE_IDS, 'r')
+    testinstance_lines = testinstance_f.read().splitlines()
+
+    trial = 0
+    for line in testinstance_lines:
+        # begin new trial
+        if line.startswith('******'):
+            eval_f = open(cfg.PTH_EVAL_LST[trial], 'w')
+            trial += 1
+            continue
+
+        # end trial
+        if line == '':
+            if not eval_f.closed:
+                eval_f.close()
+            continue
+
+        a_class = line[:line.rindex('_')]
+        objs = [line]
+        make_lists(a_class, objs, cfg.DIR_DATA_EVAL_RAW, eval_f)
+
+
+    testinstance_f.close()
+    return
 
 if __name__ == '__main__':
-    main()
+    #main()
+    make_train_list()
+    make_eval_list()
