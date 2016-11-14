@@ -63,7 +63,7 @@ def fill_feed_dict(img_batch, lbl_batch, images_ph, labels_ph, keep_prob_ph, is_
     return feed_dict
 
 
-def do_eval(sess, eval_correct, images_ph, labels_ph, keep_prob_ph, all_data, all_labels):
+def do_eval(sess, eval_correct, images_ph, labels_ph, keep_prob_ph, all_data, all_labels, logfile=None):
     ''' Run one evaluation against the full epoch of data
 
     Args:
@@ -80,7 +80,6 @@ def do_eval(sess, eval_correct, images_ph, labels_ph, keep_prob_ph, all_data, al
     '''
     true_count, start_idx = 0, 0
     num_samples = all_data.shape[0]
-    #indices = np.random.permutation(num_samples)
     indices = np.arange(num_samples)
     while start_idx != num_samples:
         stop_idx = common.next_batch(indices, start_idx, FLAGS.batch_size)
@@ -95,27 +94,41 @@ def do_eval(sess, eval_correct, images_ph, labels_ph, keep_prob_ph, all_data, al
 
     precision = true_count*1.0 / num_samples
     print '    Num-samples:%d   Num-correct:%d   Precision:%0.04f' % (num_samples, true_count, precision)
+    if logfile is not None:
+        logfile.write('    Num-samples:%d  Num-correct:%d  Precision:%0.04f\n' % (num_samples, true_count, precision))
+
     return precision
 
 
 #=========================================================================================
 def run_training(tag):
+    logfile = open(os.path.join(cfg.DIR_LOG, 'training_'+tag+'.log'), 'w', 0)
+
     # load data
     print 'Loading AlexNet...'
     net_data = np.load(cfg.PTH_WEIGHT_ALEX).item()
+
     print 'Loading lists...'
     with open(cfg.PTH_TRAIN_LST, 'r') as f: train_lst = f.read().splitlines()
-    with open(cfg.PTH_EVAL_LST,  'r') as f: eval_lst  = f.read().splitlines()
-    #train_lst = train_lst[:10]; eval_lst = eval_lst[:10]
-    if tag == 'rgb':
-        ext = cfg.EXT_RGB
-    elif tag == 'dep':
-        ext = cfg.EXT_D
+    eval_lst = []
+    for trial in range(cfg.N_TRIALS):
+        with open(cfg.PTH_EVAL_LST[trial], 'r') as f: eval_lst.append(f.read().splitlines())
+    if tag == 'rgb': ext = cfg.EXT_RGB
+    elif tag == 'dep': ext = cfg.EXT_D
+
     print 'Loading training data...'
     train_data, train_labels = common.load_images(train_lst, cfg.DIR_DATA, ext, cfg.CLASSES)
+    num_train = len(train_data)
+
     print 'Loading validation data...'
-    eval_data,  eval_labels  = common.load_images(eval_lst,  cfg.DIR_DATA, ext, cfg.CLASSES)
-    num_train = train_data.shape[0]
+    eval_data, eval_labels = [], []
+    for trial in range(cfg.N_TRIALS):
+        print 'Trial %d:' % (trial+1)
+        pth = cfg.DIR_DATA if tag == 'rgb' else cfg.DIR_DATA_EVAL # TODO: use original rgb images
+        foo, bar = common.load_images(eval_lst[trial], pth, ext, cfg.CLASSES) # TODO
+        #foo, bar = common.load_images(eval_lst[trial], cfg.DIR_DATA_EVAL, ext, cfg.CLASSES)
+        eval_data.append(foo)
+        eval_labels.append(bar)
 
     # tensorflow variables and operations
     print 'Preparing tensorflow...'
@@ -150,7 +163,12 @@ def run_training(tag):
 
         # train by batches
         total_loss, start_idx = 0, 0
+        lim = 10
         while start_idx != num_train:
+            if start_idx*100.0 / num_train > lim:
+                print 'Trained %d/%d' % (start_idx, num_train)
+                lim += 10
+
             stop_idx = common.next_batch(indices, start_idx, FLAGS.batch_size)
             batch_idx = indices[start_idx: stop_idx]
 
@@ -170,11 +188,13 @@ def run_training(tag):
         # write summary------------------------------------------------
         if step % FLAGS.summary_frequency == 0:
             print 'Step %d: loss = %.3f (%.3f sec)' % (step, total_loss, duration)
+            logfile.write('Step %d: loss = %.3f (%.3f sec)\n' % (step, total_loss, duration))
             summary_str = sess.run(summary, feed_dict=fd)
             summary_writer.add_summary(summary_str, step)
             summary_writer.flush()
         else:
             print 'Step', step, '  '
+            logfile.write('Step %d \n' % step)
 
 
         # write checkpoint---------------------------------------------
@@ -183,23 +203,33 @@ def run_training(tag):
             saver.save(sess, checkpoint_file, global_step=step)
 
             print '  Training data eval:'
+            logfile.write('  Training data eval:\n')
             do_eval(
                 sess, eval_correct, 
                 images_ph, labels_ph, keep_prob_ph, 
-                train_data, train_labels)
+                train_data, train_labels, logfile)
 
             print '  Validation data eval:'
-            precision = do_eval(
-                sess, eval_correct, 
-                images_ph, labels_ph, keep_prob_ph, 
-                eval_data, eval_labels)
+            logfile.write('  Validation data eval:\n')
+            avg_precision = 0
+            for trial in range(cfg.N_TRIALS):
+                precision = do_eval(
+                    sess, eval_correct, 
+                    images_ph, labels_ph, keep_prob_ph, 
+                    eval_data[trial], eval_labels[trial], logfile)
+                avg_precision += precision
+            avg_precision /= cfg.N_TRIALS
+            print 'Average precision: %.4f' % avg_precision
+            logfile.write('Average precision: %.4f\n' % avg_precision)
 
             # early stopping
-            to_stop, patience_count = common.early_stopping(old_precision, precision, patience_count)
-            old_precision = precision
+            to_stop, patience_count = common.early_stopping(old_precision, avg_precision, patience_count)
+            old_precision = avg_precision
             if to_stop: 
                 print 'Early stopping...'
+                logfile.write('Early stopping...\n')
                 break
+    logfile.close()
     return
 
 

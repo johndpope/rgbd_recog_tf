@@ -54,7 +54,8 @@ def training(loss, learning_rate=None):
     tf.scalar_summary(loss.op.name, loss)
 
     # Create the optimizer with given learning rate
-    optimizer = tf.train.AdagradOptimizer(learning_rate)
+    #optimizer = tf.train.AdagradOptimizer(learning_rate)
+    optimizer = tf.train.AdamOptimizer(learning_rate)
 
     # Create a variable to track the global step
     global_step = tf.Variable(0, name='global_step', trainable=False)

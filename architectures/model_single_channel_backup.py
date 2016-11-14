@@ -25,10 +25,10 @@ def inference(images, net_data, keep_prob, tag=''):
         conv1b = tf.Variable(net_data['conv1'][1], name='biases')
         conv1_in = conv(images, conv1W, conv1b, 11, 11, 96, 4, 4, padding='SAME', group=1)
         conv1 = tf.nn.relu(conv1_in, name=scope)
+    ## lrn(2,2e-05,0.75,name='norm1')
+    lrn1 = tf.nn.local_response_normalization(conv1, depth_radius=2, alpha=2e-5, beta=0.75, bias=1.0, name='norm1')
     ## max_pool(3,3,2,2,padding='VALID',name='pool1')
     maxpool1 = tf.nn.max_pool(lrn1, ksize=[1,3,3,1], strides=[1,2,2,1], padding='VALID', name='pool1')
-    ## lrn(2,2e-05,0.75,name='norm1')
-    lrn1 = tf.nn.local_response_normalization(conv1, depth_radius=5, alpha=1e-4, beta=0.75, name='norm1')
 
 
     # conv-2 layer
@@ -38,10 +38,11 @@ def inference(images, net_data, keep_prob, tag=''):
         conv2b = tf.Variable(net_data['conv2'][1], name='biases')
         conv2_in = conv(maxpool1, conv2W, conv2b, 5, 5, 256, 1, 1, padding='SAME', group=2)
         conv2 = tf.nn.relu(conv2_in, name=scope)
+    ## lrn(2,2e-05,0.75,name='norm2')
+    lrn2 = tf.nn.local_response_normalization(conv2, depth_radius=2, alpha=2e-5, beta=0.75, bias=1.0, name='norm2')
     ## max_pool(3,3,2,2,padding='VALID',name='pool2')
     maxpool2 = tf.nn.max_pool(lrn2, ksize=[1,3,3,1], strides=[1,2,2,1], padding='VALID', name='pool2')
-    ## lrn(2,2e-05,0.75,name='norm2')
-    lrn2 = tf.nn.local_response_normalization(conv2, depth_radius=5, alpha=1e-4, beta=0.75, name='norm2')
+
 
     # conv-3 layer
     ## conv(3,3,384,1,1,name='conv3')
@@ -97,7 +98,6 @@ def inference(images, net_data, keep_prob, tag=''):
         # do not use net_data as we have differenet number of classes here
         #fc8W = tf.Variable(net_data['fc8'][0], name='weight')
         #fc8b = tf.Variable(net_data['fc8'][1], name='biases')
-        '''
         fc8W_mean = np.mean(net_data['fc8'][0])
         fc8W_std  = np.std(net_data['fc8'][0])
         fc8b_mean = np.mean(net_data['fc8'][1])
@@ -106,9 +106,6 @@ def inference(images, net_data, keep_prob, tag=''):
             mean=fc8W_mean, stddev=fc8W_std), name='weight')
         fc8b = tf.Variable(tf.random_normal([FLAGS.n_classes],
             mean=fc8b_mean, stddev=fc8b_std), name='biases')
-        '''
-        fc8W = tf.Variable(tf.random_normal([4096,FLAGS.n_classes], stddev=0.01), name='weight')
-        fc8b = tf.Variable(tf.zeros([4096]), name='biases')
         fc8 = tf.nn.xw_plus_b(fc7_drop, fc8W, fc8b, name=scope)
 
 
@@ -137,7 +134,6 @@ def loss(prob, labels, tag):
     loss = tf.reduce_sum(L, reduction_indices=0, name='loss')
 
     # regularize fully connected layers
-    '''
     with tf.variable_scope(tag+'fc7'):
         fc7W = tf.get_variable('weight', [4096,4096], dtype=tf.float32)
         fc7b = tf.get_variable('biases', [4096], dtype=tf.float32)
@@ -146,16 +142,6 @@ def loss(prob, labels, tag):
         fc8b = tf.get_variable('biases', [FLAGS.n_classes], dtype=tf.float32)
 
     regularizers = tf.nn.l2_loss(fc7W) + tf.nn.l2_loss(fc7b) + tf.nn.l2_loss(fc8W) + tf.nn.l2_loss(fc8b)
-    '''
-    layers = ['conv1','conv2','conv3','conv4','conv5','fc6','fc7','fc8']
-    shapes = [[11,11,3,96],[5,5,48,256],[3,3,256,384],[3,3,192,384],[3,3,192,256],[9216,4096],[4096,4096],[4096,FLAGS.n_classes]]
-    regularizers = 0
-    for i in range(len(layers)):
-        with tf.variable_scope(tag+layers[i]):
-            weight = tf.get_variable('weight', shapes[i], dtype=tf.float32)
-            regularizers += tf.nn.l2_loss(weight)
-
-    #loss += 5e-4 * regularizers
-    loss += 0.001*regularizers
+    loss += 5e-4 * regularizers
     return loss
 
