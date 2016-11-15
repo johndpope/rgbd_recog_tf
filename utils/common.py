@@ -35,6 +35,10 @@ def parse_label(x, classes):
 
 
 def load_images(lst, data_dir, ext, classes, IMG_S=227):
+    # load mean img
+    mean_img = np.load(cfg.PTH_MEAN_IMG)
+    mean_img = mean_img.transpose(1,2,0)
+
     N = len(lst)
     images = np.zeros((N,IMG_S,IMG_S,3), dtype=np.uint8)
     labels = np.zeros((N,len(classes)), dtype=np.float32)
@@ -43,6 +47,15 @@ def load_images(lst, data_dir, ext, classes, IMG_S=227):
     for i in range(N):
         # read image
         img = cv2.imread(os.path.join(data_dir, lst[i]+ext))
+
+        # mean removal
+        img = img.astype(np.float32) - mean_img.astype(np.float32)
+
+        # crop to 227x227
+        b = (mean_img.shape[0]-IMGS)/2
+        img = img[b:IMGS+b,b:IMGS+b,:]
+
+        # add to list
         img = img[np.newaxis, ...]
         images[i] = img
 
