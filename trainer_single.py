@@ -11,6 +11,7 @@ FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_integer('max_iter', 500, """Maximum number of training iteration.""")
 tf.app.flags.DEFINE_integer('batch_size', 400, """Numer of images to process in a batch.""")
 tf.app.flags.DEFINE_integer('img_s', cfg.IMG_S, """"Size of a square image.""")
+tf.app.flags.DEFINE_integer('img_s_raw', 256, """"Size of a square image.""")
 tf.app.flags.DEFINE_integer('n_classes', 51, """Number of classes.""")
 tf.app.flags.DEFINE_float('learning_rate', 1e-3, """"Learning rate for training models.""")
 tf.app.flags.DEFINE_integer('summary_frequency', 1, """How often to write summary.""")
@@ -57,9 +58,9 @@ def fill_feed_dict(img_batch, lbl_batch, images_ph, labels_ph, keep_prob_ph, is_
         lbl_batch = np.pad(lbl_batch, ((0,M),(0,0)), 'constant', constant_values=0)
 
     if is_training:
-        feed_dict = {images_ph: img_batch, labels_ph: lbl_batch, keep_prob_ph: 0.5}
+        feed_dict = {images_ph: common.random_crop(img_batch), labels_ph: lbl_batch, keep_prob_ph: 0.5}
     else:
-        feed_dict = {images_ph: img_batch, labels_ph: lbl_batch, keep_prob_ph: 1.0}
+        feed_dict = {images_ph: common.central_crop(img_batch), labels_ph: lbl_batch, keep_prob_ph: 1.0}
     return feed_dict
 
 
@@ -115,6 +116,8 @@ def run_training(tag):
         with open(cfg.PTH_EVAL_LST[trial], 'r') as f: eval_lst.append(f.read().splitlines())
     if tag == 'rgb': ext = cfg.EXT_RGB
     elif tag == 'dep': ext = cfg.EXT_D
+    #train_lst = train_lst[:10] #TODO
+    #cfg.N_TRIALS = 1 #TODO
 
     print 'Loading training data...'
     train_data, train_labels = common.load_images(train_lst, cfg.DIR_DATA, ext, cfg.CLASSES)
@@ -124,9 +127,9 @@ def run_training(tag):
     eval_data, eval_labels = [], []
     for trial in range(cfg.N_TRIALS):
         print 'Trial %d:' % (trial+1)
-        pth = cfg.DIR_DATA if tag == 'rgb' else cfg.DIR_DATA_EVAL # TODO: use original rgb images
-        foo, bar = common.load_images(eval_lst[trial], pth, ext, cfg.CLASSES) # TODO
-        #foo, bar = common.load_images(eval_lst[trial], cfg.DIR_DATA_EVAL, ext, cfg.CLASSES)
+        #pth = cfg.DIR_DATA if tag == 'rgb' else cfg.DIR_DATA_EVAL # TODO: use original rgb images
+        #foo, bar = common.load_images(eval_lst[trial], pth, ext, cfg.CLASSES) # TODO
+        foo, bar = common.load_images(eval_lst[trial], cfg.DIR_DATA_EVAL, ext, cfg.CLASSES)
         eval_data.append(foo)
         eval_labels.append(bar)
 

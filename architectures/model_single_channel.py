@@ -26,9 +26,9 @@ def inference(images, net_data, keep_prob, tag=''):
         conv1_in = conv(images, conv1W, conv1b, 11, 11, 96, 4, 4, padding='SAME', group=1)
         conv1 = tf.nn.relu(conv1_in, name=scope)
     ## max_pool(3,3,2,2,padding='VALID',name='pool1')
-    maxpool1 = tf.nn.max_pool(lrn1, ksize=[1,3,3,1], strides=[1,2,2,1], padding='VALID', name='pool1')
+    maxpool1 = tf.nn.max_pool(conv1, ksize=[1,3,3,1], strides=[1,2,2,1], padding='VALID', name='pool1')
     ## lrn(2,2e-05,0.75,name='norm1')
-    lrn1 = tf.nn.local_response_normalization(conv1, depth_radius=5, alpha=1e-4, beta=0.75, name='norm1')
+    lrn1 = tf.nn.local_response_normalization(maxpool1, depth_radius=5, alpha=1e-4, beta=0.75, name='norm1')
 
 
     # conv-2 layer
@@ -36,19 +36,20 @@ def inference(images, net_data, keep_prob, tag=''):
     with tf.name_scope(tag+'conv2') as scope:
         conv2W = tf.Variable(net_data['conv2'][0], name='weight')
         conv2b = tf.Variable(net_data['conv2'][1], name='biases')
-        conv2_in = conv(maxpool1, conv2W, conv2b, 5, 5, 256, 1, 1, padding='SAME', group=2)
+        conv2_in = conv(lrn1, conv2W, conv2b, 5, 5, 256, 1, 1, padding='SAME', group=2)
         conv2 = tf.nn.relu(conv2_in, name=scope)
     ## max_pool(3,3,2,2,padding='VALID',name='pool2')
-    maxpool2 = tf.nn.max_pool(lrn2, ksize=[1,3,3,1], strides=[1,2,2,1], padding='VALID', name='pool2')
+    maxpool2 = tf.nn.max_pool(conv2, ksize=[1,3,3,1], strides=[1,2,2,1], padding='VALID', name='pool2')
     ## lrn(2,2e-05,0.75,name='norm2')
-    lrn2 = tf.nn.local_response_normalization(conv2, depth_radius=5, alpha=1e-4, beta=0.75, name='norm2')
+    lrn2 = tf.nn.local_response_normalization(maxpool2, depth_radius=5, alpha=1e-4, beta=0.75, name='norm2')
+
 
     # conv-3 layer
     ## conv(3,3,384,1,1,name='conv3')
     with tf.name_scope(tag+'conv3') as scope:
         conv3W = tf.Variable(net_data['conv3'][0], name='weight')
         conv3b = tf.Variable(net_data['conv3'][1], name='biases')
-        conv3_in = conv(maxpool2, conv3W, conv3b, 3, 3, 384, 1, 1, padding='SAME', group=1)
+        conv3_in = conv(lrn2, conv3W, conv3b, 3, 3, 384, 1, 1, padding='SAME', group=1)
         conv3 = tf.nn.relu(conv3_in, name=scope)
 
 
@@ -108,7 +109,7 @@ def inference(images, net_data, keep_prob, tag=''):
             mean=fc8b_mean, stddev=fc8b_std), name='biases')
         '''
         fc8W = tf.Variable(tf.random_normal([4096,FLAGS.n_classes], stddev=0.01), name='weight')
-        fc8b = tf.Variable(tf.zeros([4096]), name='biases')
+        fc8b = tf.Variable(tf.zeros([FLAGS.n_classes]), name='biases')
         fc8 = tf.nn.xw_plus_b(fc7_drop, fc8W, fc8b, name=scope)
 
 

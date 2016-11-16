@@ -2,7 +2,6 @@ import os, glob, ipdb
 import configure as cfg
 import numpy as np
 import cv2
-import matplotlib.pyplot as plt
 
 IMREAD_COLOR = int(cv2.IMREAD_COLOR)
 IMREAD_UNCHANGED = int(cv2.IMREAD_UNCHANGED)
@@ -233,11 +232,11 @@ def process(dir_input, dir_output):
     return
 
 if __name__ == '__main__':
-    dir_input = cfg.DIR_DATA_RAW
-    dir_output = cfg.DIR_DATA
+    #dir_input = cfg.DIR_DATA_RAW
+    #dir_output = cfg.DIR_DATA
 
-    #dir_input = cfg.DIR_DATA_EVAL_RAW
-    #dir_output = cfg.DIR_DATA_EVAL
+    dir_input = cfg.DIR_DATA_EVAL_RAW
+    dir_output = cfg.DIR_DATA_EVAL
 
     print 'Input directory: %s' % dir_input
     print 'Output directory: %s' % dir_output

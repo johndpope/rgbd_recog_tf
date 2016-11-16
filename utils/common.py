@@ -34,7 +34,7 @@ def parse_label(x, classes):
     return classes.index(x.split('/')[0])
 
 
-def load_images(lst, data_dir, ext, classes, IMG_S=227):
+def load_images(lst, data_dir, ext, classes, IMG_S=256):
     # load mean img
     mean_img = np.load(cfg.PTH_MEAN_IMG)
     mean_img = mean_img.transpose(1,2,0)
@@ -51,9 +51,13 @@ def load_images(lst, data_dir, ext, classes, IMG_S=227):
         # mean removal
         img = img.astype(np.float32) - mean_img.astype(np.float32)
 
-        # crop to 227x227
-        b = (mean_img.shape[0]-IMGS)/2
-        img = img[b:IMGS+b,b:IMGS+b,:]
+        '''
+        # random crop to 227x227 --> jiterring
+        r = (mean_img.shape[0]-IMG_S)/2
+        u = np.random.randint(r+1)
+        v = np.random.randint(r+1)
+        img = img[u:IMG_S+u,v:IMG_S+v,:]
+        '''
 
         # add to list
         img = img[np.newaxis, ...]
@@ -107,3 +111,21 @@ def load_4d(lst, rgb_dir, dep_dir, process_dep=False):
             lim += 10
         
     return rgbds, labels
+
+
+def random_crop(images):
+    old_size = images.shape[1]
+    new_size = cfg.IMG_S
+    r = old_size - new_size
+    u = np.random.randint(r+1)
+    v = np.random.randint(r+1)
+    images = images[:, u:new_size+u, v:new_size+v, :]
+    return images
+
+
+def central_crop(images):
+    old_size = images.shape[1]
+    new_size = cfg.IMG_S
+    r = (old_size-new_size)/2
+    images = images[:, r:new_size+r, r:new_size+r, :]
+    return images
