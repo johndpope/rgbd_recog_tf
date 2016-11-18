@@ -157,6 +157,6 @@ def loss(prob, labels, tag):
             regularizers += tf.nn.l2_loss(weight)
 
     #loss += 5e-4 * regularizers
-    loss += 0.001*regularizers
+    loss += 1e-4*regularizers
     return loss
 

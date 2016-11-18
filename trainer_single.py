@@ -8,7 +8,7 @@ from architectures import model_single_channel as model
 
 # model parameters
 FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_integer('max_iter', 500, """Maximum number of training iteration.""")
+tf.app.flags.DEFINE_integer('max_iter', 30000, """Maximum number of training iteration.""")
 tf.app.flags.DEFINE_integer('batch_size', 400, """Numer of images to process in a batch.""")
 tf.app.flags.DEFINE_integer('img_s', cfg.IMG_S, """"Size of a square image.""")
 tf.app.flags.DEFINE_integer('img_s_raw', 256, """"Size of a square image.""")
@@ -58,7 +58,7 @@ def fill_feed_dict(img_batch, lbl_batch, images_ph, labels_ph, keep_prob_ph, is_
         lbl_batch = np.pad(lbl_batch, ((0,M),(0,0)), 'constant', constant_values=0)
 
     if is_training:
-        feed_dict = {images_ph: common.random_crop(img_batch), labels_ph: lbl_batch, keep_prob_ph: 0.5}
+        feed_dict = {images_ph: common.random_crop(img_batch, True), labels_ph: lbl_batch, keep_prob_ph: 0.5}
     else:
         feed_dict = {images_ph: common.central_crop(img_batch), labels_ph: lbl_batch, keep_prob_ph: 1.0}
     return feed_dict
@@ -204,7 +204,7 @@ def run_training(tag):
         if step % FLAGS.checkpoint_frequency == 0 or (step+1) == FLAGS.max_iter:
             checkpoint_file = os.path.join(cfg.DIR_CKPT, tag)
             saver.save(sess, checkpoint_file, global_step=step)
-
+            
             print '  Training data eval:'
             logfile.write('  Training data eval:\n')
             do_eval(
@@ -226,7 +226,7 @@ def run_training(tag):
             logfile.write('Average precision: %.4f\n' % avg_precision)
 
             # early stopping
-            to_stop, patience_count = common.early_stopping(old_precision, avg_precision, patience_count)
+            to_stop, patience_count = common.early_stopping(old_precision, avg_precision, patience_count, tolerance=1e-3, patience_limit=10)
             old_precision = avg_precision
             if to_stop: 
                 print 'Early stopping...'
