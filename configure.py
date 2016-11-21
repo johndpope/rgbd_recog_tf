@@ -15,11 +15,14 @@ DIR_DATA_EVAL_RAW = os.path.join(DIR_HOME, 'data', 'rgbd-dataset_eval')
 DIR_DATA_EVAL     = os.path.join(DIR_HOME, 'data', 'rgbd-dataset_eval-processed')
 
 # Lists
-PTH_TRAIN_LST        = os.path.join(DIR_LST, 'train.lst')
+PTH_FULLTRAIN_LST    = os.path.join(DIR_LST, 'fulltrain.lst')
+PTH_FULLEVAL_LST     = os.path.join(DIR_LST, 'fulleval.lst')
+PTH_TRAIN_LST        = [os.path.join(DIR_LST, 'train_'+str(trial+1)+'.lst') for trial in range(10)]
 PTH_EVAL_LST         = [os.path.join(DIR_LST, 'eval_'+str(trial+1)+'.lst') for trial in range(10)]
 PTH_TESTINSTANCE_IDS = os.path.join(DIR_LST, 'testinstance_ids.txt')
 #PTH_TEST_LST    = os.path.join(DIR_LST, 'test_full.lst')
 PTH_DICT             = os.path.join(DIR_LST, 'dictionary.lst')
+PTH_TRIAL_SPLIT      = os.path.join(DIR_LST, 'trial_split.npy')
 
 # Model
 PTH_WEIGHT_ALEX = os.path.join(DIR_MODEL, 'bvlc_alexnet.npy') # AlexNet's pretrained model

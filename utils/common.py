@@ -8,6 +8,18 @@ IMREAD_COLOR = int(cv2.IMREAD_COLOR)
 IMREAD_UNCHANGED = int(cv2.IMREAD_UNCHANGED)
 
 
+def writer(msg, params, f):
+    """ print to screen and file
+    Args:
+        msg: string with format
+        params: tuple of parameter
+        f: file holder
+    """
+    print msg % params
+    logfile.write(msg+'\n' % params)
+    return
+
+#batch manager-------------------------------------------------------------------------------------------
 def next_batch(indices, start_idx, batch_size):
     N = indices.shape[0]
     if start_idx+batch_size > N:
@@ -30,6 +42,7 @@ def early_stopping(old_val, new_val, patience_count, tolerance=1e-2, patience_li
     return to_stop, patience_count
 
 
+#data loader----------------------------------------------------------------------------------------------
 def parse_label(x, classes):
     return classes.index(x.split('/')[0])
 
@@ -64,7 +77,7 @@ def load_images(lst, data_dir, ext, classes, IMG_S=256):
             lim += 10
     return images, labels
 
-
+'''
 from preprocess_4d import resize_dep
 def load_4d(lst, rgb_dir, dep_dir, process_dep=False):
     N = len(lst)
@@ -103,8 +116,9 @@ def load_4d(lst, rgb_dir, dep_dir, process_dep=False):
             lim += 10
         
     return rgbds, labels
+'''
 
-
+#image helpers-----------------------------------------------------------------------------------------
 def random_crop(images, rand_fl):
     old_size = images.shape[1]
     new_size = cfg.IMG_S

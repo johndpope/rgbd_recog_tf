@@ -58,13 +58,13 @@ def fill_feed_dict(img_batch, lbl_batch, images_ph, labels_ph, keep_prob_ph, is_
         lbl_batch = np.pad(lbl_batch, ((0,M),(0,0)), 'constant', constant_values=0)
 
     if is_training:
-        feed_dict = {images_ph: common.random_crop(img_batch, True), labels_ph: lbl_batch, keep_prob_ph: 0.5}
+        feed_dict = {images_ph: common.random_crop(img_batch, rand_fl=True), labels_ph: lbl_batch, keep_prob_ph: 0.5}
     else:
         feed_dict = {images_ph: common.central_crop(img_batch), labels_ph: lbl_batch, keep_prob_ph: 1.0}
     return feed_dict
 
 
-def do_eval(sess, eval_correct, images_ph, labels_ph, keep_prob_ph, all_data, all_labels, logfile=None):
+def do_eval(sess, eval_correct, images_ph, labels_ph, keep_prob_ph, all_data, all_labels, logfile):
     ''' Run one evaluation against the full epoch of data
 
     Args:
@@ -94,15 +94,13 @@ def do_eval(sess, eval_correct, images_ph, labels_ph, keep_prob_ph, all_data, al
         start_idx = stop_idx
 
     precision = true_count*1.0 / num_samples
-    print '    Num-samples:%d   Num-correct:%d   Precision:%0.04f' % (num_samples, true_count, precision)
-    if logfile is not None:
-        logfile.write('    Num-samples:%d  Num-correct:%d  Precision:%0.04f\n' % (num_samples, true_count, precision))
+    common.writer('    Num-samples:%d   Num-correct:%d   Precision:%0.04f', (num_samples, true_count, precision), logfile)
 
     return precision
 
 
 #=========================================================================================
-def run_training(tag):
+def run_training(train_lst, eval_lst, train_dir, eval_dir, tag):
     logfile = open(os.path.join(cfg.DIR_LOG, 'training_'+tag+'.log'), 'w', 0)
 
     # load data
@@ -110,28 +108,18 @@ def run_training(tag):
     net_data = np.load(cfg.PTH_WEIGHT_ALEX).item()
 
     print 'Loading lists...'
-    with open(cfg.PTH_TRAIN_LST, 'r') as f: train_lst = f.read().splitlines()
-    eval_lst = []
-    for trial in range(cfg.N_TRIALS):
-        with open(cfg.PTH_EVAL_LST[trial], 'r') as f: eval_lst.append(f.read().splitlines())
+    with open(train_lst, 'r') as f: train_lst = f.read().splitlines()
+    with open(eval_lst, 'r') as  f: eval_lst  = f.read().splitlines()
     if tag == 'rgb': ext = cfg.EXT_RGB
     elif tag == 'dep': ext = cfg.EXT_D
     #train_lst = train_lst[:10] #TODO
-    #cfg.N_TRIALS = 1 #TODO
 
     print 'Loading training data...'
-    train_data, train_labels = common.load_images(train_lst, cfg.DIR_DATA, ext, cfg.CLASSES)
+    train_data, train_labels = common.load_images(train_lst, train_dir, ext, cfg.CLASSES)
     num_train = len(train_data)
 
     print 'Loading validation data...'
-    eval_data, eval_labels = [], []
-    for trial in range(cfg.N_TRIALS):
-        print 'Trial %d:' % (trial+1)
-        #pth = cfg.DIR_DATA if tag == 'rgb' else cfg.DIR_DATA_EVAL # TODO: use original rgb images
-        #foo, bar = common.load_images(eval_lst[trial], pth, ext, cfg.CLASSES) # TODO
-        foo, bar = common.load_images(eval_lst[trial], cfg.DIR_DATA_EVAL, ext, cfg.CLASSES)
-        eval_data.append(foo)
-        eval_labels.append(bar)
+    eval_data, eval_labels = common.load_images(eval_lst, eval_dir, ext, cfg.CLASSES)
 
     # tensorflow variables and operations
     print 'Preparing tensorflow...'
@@ -190,14 +178,12 @@ def run_training(tag):
 
         # write summary------------------------------------------------
         if step % FLAGS.summary_frequency == 0:
-            print 'Step %d: loss = %.3f (%.3f sec)' % (step, total_loss, duration)
-            logfile.write('Step %d: loss = %.3f (%.3f sec)\n' % (step, total_loss, duration))
+            common.writer('Step %d: loss = %.3f (%.3f sec)', (step, total_loss, duration), logfile)
             summary_str = sess.run(summary, feed_dict=fd)
             summary_writer.add_summary(summary_str, step)
             summary_writer.flush()
         else:
-            print 'Step', step, '  '
-            logfile.write('Step %d \n' % step)
+            common.writer('Step %d', step, logfile)
 
 
         # write checkpoint---------------------------------------------
@@ -205,32 +191,25 @@ def run_training(tag):
             checkpoint_file = os.path.join(cfg.DIR_CKPT, tag)
             saver.save(sess, checkpoint_file, global_step=step)
             
-            print '  Training data eval:'
-            logfile.write('  Training data eval:\n')
+            common.writer('  Training data eval:', (), logfile)
             do_eval(
                 sess, eval_correct, 
                 images_ph, labels_ph, keep_prob_ph, 
                 train_data, train_labels, logfile)
 
-            print '  Validation data eval:'
-            logfile.write('  Validation data eval:\n')
-            avg_precision = 0
-            for trial in range(cfg.N_TRIALS):
-                precision = do_eval(
-                    sess, eval_correct, 
-                    images_ph, labels_ph, keep_prob_ph, 
-                    eval_data[trial], eval_labels[trial], logfile)
-                avg_precision += precision
-            avg_precision /= cfg.N_TRIALS
-            print 'Average precision: %.4f' % avg_precision
-            logfile.write('Average precision: %.4f\n' % avg_precision)
+            common.writer('  Validation data eval:', (), logfile)
+            precision = do_eval(
+                sess, eval_correct, 
+                images_ph, labels_ph, keep_prob_ph, 
+                eval_data, eval_labels, logfile)
+            common.writer('Precision: %.4f', precision, logfile)
 
             # early stopping
-            to_stop, patience_count = common.early_stopping(old_precision, avg_precision, patience_count, tolerance=1e-3, patience_limit=10)
-            old_precision = avg_precision
+            to_stop, patience_count = common.early_stopping(\
+                    old_precision, precision, patience_count, tolerance=1e-3, patience_limit=10)
+            old_precision = precision
             if to_stop: 
-                print 'Early stopping...'
-                logfile.write('Early stopping...\n')
+                common.writer('Early stopping...', (), logfile)
                 break
     logfile.close()
     return
@@ -238,10 +217,19 @@ def run_training(tag):
 
 #=========================================================================================
 def main(argv=None):
+    trial = 0
+    print 'Trial: %d' % trial
+
+    train_lst = cfg.PTH_TRAIN_LST[trial]
+    eval_lst = cfg.PTH_EVAL_LST[trial]
+    train_dir = cfg.DIR_DATA #TODO: change to eval dir?
+    eval_dir = cfg.DIR_DATA_EVAL
+
     with tf.Graph().as_default():
-        run_training(tag='rgb')
+        run_training(train_lst, eval_lst, train_dir, eval_dir, tag='rgb')
+
     with tf.Graph().as_default():
-        run_training(tag='dep')
+        run_training(train_lst, eval_lst, train_dir, eval_dir, tag='dep')
 
 
 if __name__ == '__main__':

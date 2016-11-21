@@ -1,19 +1,20 @@
 import os, glob, ipdb
 import configure as cfg
+import numpy as np
 
 
-def make_lists(a_class, objs, parrent_path, file):
-    class_pth = os.path.join(parrent_path, a_class)
+def make_lists(category, objs, parrent_path, file):
+    class_pth = os.path.join(parrent_path, category)
     for obj in objs:
         obj_pth = os.path.join(class_pth, obj)
-        obj_pth_out = os.path.join(cfg.DIR_DATA, a_class, obj)
+        obj_pth_out = os.path.join(cfg.DIR_DATA, category, obj)
 
         sample_ids = glob.glob1(obj_pth, '*_loc.txt') # samples
         sample_ids = [i.replace('_loc.txt','') for i in sample_ids]
         sample_ids.sort()
 
         for sid in sample_ids:
-            line = os.path.join(a_class, obj, sid) + '\n'
+            line = os.path.join(category, obj, sid) + '\n'
             file.write(line)
     return
 
@@ -49,23 +50,30 @@ def main():
 '''
 
 
-def make_train_list():
-    train_f = open(cfg.PTH_TRAIN_LST, 'w')
+def make_full_list(data_dir, outfile):
+    f = open(outfile, 'w')
 
     # go through the whole dataset
-    classes = os.listdir(cfg.DIR_DATA_RAW) # classes
-    if '.DS_Store' in classes: classes.remove('.DS_Store')
-    if not os.path.exists(cfg.DIR_DATA): os.mkdir(cfg.DIR_DATA)
-
-    classes.sort()
-    for a_class in classes:
-        class_pth = os.path.join(cfg.DIR_DATA_RAW, a_class)
+    categories = open(cfg.PTH_DICT).read().splitlines()
+    for category in categories:
+        class_pth = os.path.join(data_dir, category)
         objs = os.listdir(class_pth) # objects
-        if '.DS_Store' in objs: objs.remove('.DS_Store')
+        objs = [o for o in objs if not o.startswith('.')]
         objs.sort()
-        make_lists(a_class, objs, cfg.DIR_DATA_RAW, train_f)
+        make_lists(category, objs, data_dir, f)
 
-    train_f.close()
+    f.close()
+    return
+
+
+def make_train_list(trial_splits):
+    for trial in range(cfg.N_TRIALS):
+        train_f = open(cfg.PTH_TRAIN_LST[trial], 'w')
+        objs = trial_splits[trial][0]
+        for obj in objs:
+            category = obj[:obj.rindex('_')]
+            make_lists(category, [obj], cfg.DIR_DATA_EVAL_RAW, train_f)
+        train_f.close()
     return
 
 
@@ -91,11 +99,49 @@ def make_eval_list():
         objs = [line]
         make_lists(a_class, objs, cfg.DIR_DATA_EVAL_RAW, eval_f)
 
-
     testinstance_f.close()
     return
 
+
+def make_trial_split():
+    # retrievw all objects ids
+    categories = open(cfg.PTH_DICT, 'r').read().splitlines()
+    obj_ids = []
+    for category in categories:
+        foo = os.listdir(os.path.join(cfg.DIR_DATA_EVAL_RAW, category))
+        obj_ids += [bar for bar in foo if not bar.startswith('.')]
+
+    #
+    trial_lines = open(cfg.PTH_TESTINSTANCE_IDS, 'r').read().splitlines()
+    trial = 0
+    trial_splits = [None]*cfg.N_TRIALS
+    for line in trial_lines:
+        # begin new trial
+        if line.startswith('******'):
+            eval_objs = []
+            train_objs = []
+            continue
+
+        # end trial
+        if line == '':
+            if not train_objs == []:
+                continue
+            train_objs = [foo for foo in obj_ids if foo not in eval_objs]
+            train_objs.sort(); eval_objs.sort()
+            trial_splits[trial] = (train_objs, eval_objs)
+            trial += 1
+            continue
+
+        eval_objs += [line]
+    np.save(cfg.PTH_TRIAL_SPLIT, trial_splits)
+    return trial_splits
+
+
 if __name__ == '__main__':
-    #main()
-    make_train_list()
+    ####main()
+    #make_full_list(cfg.DIR_DATA_RAW, cfg.PTH_FULLTRAIN_LST)
+    #make_full_list(cfg.DIR_DATA_EVAL_RAW, cfg.PTH_FULLEVAL_LST)
+    trial_splits = make_trial_split()
+
+    make_train_list(trial_splits)
     make_eval_list()
