@@ -225,6 +225,7 @@ def process(dir_input, dir_output, masked):
                     if mask is None:
                         foo = glob.glob(os.path.join(dir_obj, instance+'_*'))
                         for bar in foo:
+                            bar = bar[bar.rindex('/')+1:]
                             old = os.path.join(dir_obj, bar)
                             new = os.path.join(cfg.DIR_DATA_AUX, bar)
                             os.rename(old, new)
