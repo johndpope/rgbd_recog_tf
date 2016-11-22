@@ -16,7 +16,8 @@ def writer(msg, params, f):
         f: file holder
     """
     print msg % params
-    logfile.write(msg+'\n' % params)
+    msg += '\n'
+    f.write(msg % params)
     return
 
 #batch manager-------------------------------------------------------------------------------------------
@@ -77,7 +78,7 @@ def load_images(lst, data_dir, ext, classes, IMG_S=256):
             lim += 10
     return images, labels
 
-'''
+
 from preprocess_4d import resize_dep
 def load_4d(lst, rgb_dir, dep_dir, process_dep=False):
     N = len(lst)
@@ -116,7 +117,7 @@ def load_4d(lst, rgb_dir, dep_dir, process_dep=False):
             lim += 10
         
     return rgbds, labels
-'''
+
 
 #image helpers-----------------------------------------------------------------------------------------
 def random_crop(images, rand_fl):

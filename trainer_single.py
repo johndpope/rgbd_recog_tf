@@ -206,7 +206,7 @@ def run_training(train_lst, eval_lst, train_dir, eval_dir, tag):
 
             # early stopping
             to_stop, patience_count = common.early_stopping(\
-                    old_precision, precision, patience_count, tolerance=1e-3, patience_limit=10)
+                    old_precision, precision, patience_count)
             old_precision = precision
             if to_stop: 
                 common.writer('Early stopping...', (), logfile)
@@ -223,6 +223,7 @@ def main(argv=None):
     train_lst = cfg.PTH_TRAIN_LST[trial]
     eval_lst = cfg.PTH_EVAL_LST[trial]
     train_dir = cfg.DIR_DATA #TODO: change to eval dir?
+    #train_dir = cfg.DIR_DATA_EVAL
     eval_dir = cfg.DIR_DATA_EVAL
 
     with tf.Graph().as_default():
