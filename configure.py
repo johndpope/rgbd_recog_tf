@@ -15,6 +15,9 @@ DIR_DATA_4D       = os.path.join(DIR_HOME, 'data', 'rgbd-dataset-processed4d')
 DIR_DATA_EVAL_RAW = os.path.join(DIR_HOME, 'data', 'rgbd-dataset_eval')
 DIR_DATA_EVAL     = os.path.join(DIR_HOME, 'data', 'rgbd-dataset_eval-processed')
 
+DIR_DATA_AUX      = os.path.join(DIR_HOME, 'data', 'rgbd-aux')
+if not os.path.exists(DIR_DATA_AUX): os.makedirs(DIR_DATA_AUX)
+
 # Lists
 PTH_FULLTRAIN_LST    = os.path.join(DIR_LST, 'fulltrain.lst')
 PTH_FULLEVAL_LST     = os.path.join(DIR_LST, 'fulleval.lst')

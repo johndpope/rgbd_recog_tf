@@ -221,7 +221,13 @@ def process(dir_input, dir_output, masked):
                 dep = cv2.imread(os.path.join(dir_obj, instance+cfg.EXT_D), -1)
 
                 if masked:
-                    mask = cv2.imread(os.path.join(dir_obj, instance+cfg.EXT_MASK), -1) / 255
+                    mask = cv2.imread(os.path.join(dir_obj, instance+cfg.EXT_MASK), -1)
+                    if mask is None:
+                        old = os.path.join(dir_obj, instance+'*')
+                        new = os.path.join(cfg.DIR_DATA_AUX, instance+'*')
+                        os.rename(old, new)
+                        continue
+                    mask /= 255
                     mask3 = np.dstack((mask,mask,mask))
                     rgb *= mask3
                     dep *= mask
