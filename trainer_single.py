@@ -222,8 +222,7 @@ def main(argv=None):
 
     train_lst = cfg.PTH_TRAIN_LST[trial]
     eval_lst = cfg.PTH_EVAL_LST[trial]
-    train_dir = cfg.DIR_DATA #TODO: change to eval dir?
-    #train_dir = cfg.DIR_DATA_EVAL
+    train_dir = cfg.DIR_DATA_MASKED
     eval_dir = cfg.DIR_DATA_EVAL
 
     with tf.Graph().as_default():

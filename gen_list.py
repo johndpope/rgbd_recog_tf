@@ -66,13 +66,13 @@ def make_full_list(data_dir, outfile):
     return
 
 
-def make_train_list(trial_splits):
+def make_train_list(trial_splits, data_dir, out_paths):
     for trial in range(cfg.N_TRIALS):
-        train_f = open(cfg.PTH_TRAIN_LST[trial], 'w')
+        train_f = open(out_paths[trial], 'w')
         objs = trial_splits[trial][0]
         for obj in objs:
             category = obj[:obj.rindex('_')]
-            make_lists(category, [obj], cfg.DIR_DATA_EVAL_RAW, train_f)
+            make_lists(category, [obj], data_dir, train_f)
         train_f.close()
     return
 
@@ -138,10 +138,10 @@ def make_trial_split():
 
 
 if __name__ == '__main__':
-    ####main()
     #make_full_list(cfg.DIR_DATA_RAW, cfg.PTH_FULLTRAIN_LST)
     #make_full_list(cfg.DIR_DATA_EVAL_RAW, cfg.PTH_FULLEVAL_LST)
-    trial_splits = make_trial_split()
 
-    make_train_list(trial_splits)
+    trial_splits = make_trial_split()
+    make_train_list(trial_splits, cfg.DIR_DATA_EVAL_RAW, cfg.PTH_TRAIN_SHORT_LST)
+    make_train_list(trial_splits, cfg.DIR_DATA_RAW, cfg.PTH_TRAIN_LST)
     make_eval_list()

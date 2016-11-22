@@ -19,13 +19,12 @@ DIR_DATA_AUX      = os.path.join(DIR_HOME, 'data', 'rgbd-aux')
 if not os.path.exists(DIR_DATA_AUX): os.makedirs(DIR_DATA_AUX)
 
 # Lists
-PTH_FULLTRAIN_LST    = os.path.join(DIR_LST, 'fulltrain.lst')
-PTH_FULLEVAL_LST     = os.path.join(DIR_LST, 'fulleval.lst')
+#PTH_FULLTRAIN_LST    = os.path.join(DIR_LST, 'fulltrain.lst')
+#PTH_FULLEVAL_LST     = os.path.join(DIR_LST, 'fulleval.lst')
 PTH_TRAIN_LST        = [os.path.join(DIR_LST, 'train_'+str(trial+1)+'.lst') for trial in range(10)]
 PTH_TRAIN_SHORT_LST  = [os.path.join(DIR_LST, 'train_short_'+str(trial+1)+'.lst') for trial in range(10)]
 PTH_EVAL_LST         = [os.path.join(DIR_LST, 'eval_'+str(trial+1)+'.lst') for trial in range(10)]
 PTH_TESTINSTANCE_IDS = os.path.join(DIR_LST, 'testinstance_ids.txt')
-#PTH_TEST_LST    = os.path.join(DIR_LST, 'test_full.lst')
 PTH_DICT             = os.path.join(DIR_LST, 'dictionary.lst')
 PTH_TRIAL_SPLIT      = os.path.join(DIR_LST, 'trial_split.npy')
 
