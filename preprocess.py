@@ -186,7 +186,7 @@ def scaleit_experimental(img):
     return imrange_rescale
 
 
-def process(dir_input, dir_output):
+def process(dir_input, dir_output, masked):
     # load mean image
     mean_img = np.load(cfg.PTH_MEAN_IMG)
     mean_img = mean_img.transpose(1,2,0)
@@ -220,6 +220,12 @@ def process(dir_input, dir_output):
                 rgb = cv2.imread(os.path.join(dir_obj, instance+cfg.EXT_RGB), -1)
                 dep = cv2.imread(os.path.join(dir_obj, instance+cfg.EXT_D), -1)
 
+                if masked:
+                    mask = cv2.imread(os.path.join(dir_obj, instance+cfg.EXT_MASK), -1) / 255
+                    mask3 = np.dstack((mask,mask,mask))
+                    rgb *= mask3
+                    dep *= mask
+
                 # scale
                 rgb = scaleit3(rgb)
                 dep = scaleit_experimental(dep)
@@ -234,10 +240,18 @@ def process(dir_input, dir_output):
 if __name__ == '__main__':
     #dir_input = cfg.DIR_DATA_RAW
     #dir_output = cfg.DIR_DATA
+    #masked = False
 
-    dir_input = cfg.DIR_DATA_EVAL_RAW
-    dir_output = cfg.DIR_DATA_EVAL
+
+    #dir_input = cfg.DIR_DATA_EVAL_RAW
+    #dir_output = cfg.DIR_DATA_EVAL
+    #masked = False
+
+
+    dir_input = cfg.DIR_DATA_RAW
+    dir_output = cfg.DIR_DATA_MASKED
+    masked = True
 
     print 'Input directory: %s' % dir_input
     print 'Output directory: %s' % dir_output
-    process(dir_input, dir_output)
+    process(dir_input, dir_output, masked)

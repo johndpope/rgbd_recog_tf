@@ -8,9 +8,10 @@ DIR_MODEL       = 'models'
 DIR_SUMMARY     = 'summary'
 DIR_LOG         = 'logs'
 
-DIR_DATA_RAW      = os.path.join(DIR_HOME, 'data', 'rgbd-dataset') #TODO: change accordingly
-DIR_DATA          = os.path.join(DIR_HOME, 'data', 'rgbd-dataset-processed') #TODO: change accordingly
-DIR_DATA_4D       = os.path.join(DIR_HOME, 'data', 'rgbd-dataset-processed4d') #TODO: change accordingly
+DIR_DATA_RAW      = os.path.join(DIR_HOME, 'data', 'rgbd-dataset')
+DIR_DATA          = os.path.join(DIR_HOME, 'data', 'rgbd-dataset-processed')
+DIR_DATA_MASKED   = os.path.join(DIR_HOME, 'data', 'rgbd-dataset-processed-masked')
+DIR_DATA_4D       = os.path.join(DIR_HOME, 'data', 'rgbd-dataset-processed4d')
 DIR_DATA_EVAL_RAW = os.path.join(DIR_HOME, 'data', 'rgbd-dataset_eval')
 DIR_DATA_EVAL     = os.path.join(DIR_HOME, 'data', 'rgbd-dataset_eval-processed')
 
@@ -45,4 +46,5 @@ DEP_MAX         = 4000.0 # because of Kinect
 # Extensions of RGBD dataset
 EXT_RGB         = '_crop.png'
 EXT_D           = '_depthcrop.png'
+EXT_MASK        = '_maskcrop.png'
 EXT_4D          = '.npy'
