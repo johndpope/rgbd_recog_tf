@@ -223,9 +223,11 @@ def process(dir_input, dir_output, masked):
                 if masked:
                     mask = cv2.imread(os.path.join(dir_obj, instance+cfg.EXT_MASK), -1)
                     if mask is None:
-                        old = os.path.join(dir_obj, instance+'*')
-                        new = os.path.join(cfg.DIR_DATA_AUX, instance+'*')
-                        os.rename(old, new)
+                        foo = glob.glob(os.path.join(dir_obj, instance+'_*'))
+                        for bar in foo:
+                            old = os.path.join(dir_obj, bar)
+                            new = os.path.join(cfg.DIR_DATA_AUX, bar)
+                            os.rename(old, new)
                         continue
                     mask /= 255
                     mask3 = np.dstack((mask,mask,mask))
