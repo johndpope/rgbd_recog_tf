@@ -3,9 +3,7 @@ import tensorflow as tf
 import configure as cfg
 import os, ipdb
 
-RGB_CKPT_ID = '6'
-DEP_CKPT_ID = '12'
-
+'''
 def load_tf_model(tag):
     tag = tag + '_'
 
@@ -50,17 +48,32 @@ def load_tf_model(tag):
         fc8W = tf.Variable(tf.zeros([4096,51]), name='weight')
         fc8b = tf.Variable(tf.zeros([51]), name='biases')
 
-    var_lst = [conv1W, conv1b, conv2W, conv2b, conv3W, conv3b, conv4W, conv4b, conv5W, conv5b, fc6W, fc6b, fc7W, fc7b, fc8W, fc8b]
+    #var_lst = [conv1W, conv1b, conv2W, conv2b, conv3W, conv3b, conv4W, conv4b, conv5W, conv5b, fc6W, fc6b, fc7W, fc7b, fc8W, fc8b]
+
+    var_lst = [conv1W]
     return var_lst
+'''
 
 
 def convert(tag, path):
+    '''
     var_lst = load_tf_model(tag)
     saver = tf.train.Saver()
     sess = tf.Session()
     init_op = tf.initialize_all_variables()
     sess.run(init_op)
+    ipdb.set_trace()
     saver.restore(sess, path)
+    '''
+
+
+    sess = tf.Session()
+    saver = tf.train.import_meta_graph(path+'.meta')
+    saver.restore(sess, path)
+    var_lst = tf.trainable_variables()
+    for v in var_lst:
+        print v.name
+
 
     model = dict()
     tag += '_'
@@ -93,9 +106,9 @@ def convert(tag, path):
 if __name__ == '__main__':
     print 'Converting RGB model...'
     with tf.Graph().as_default():
-        convert('rgb', os.path.join(cfg.DIR_CKPT, 'rgb-'+RGB_CKPT_ID))
+        convert('rgb', os.path.join(cfg.DIR_BESTCKPT, 'rgb-best'))
 
     print 'Converting Dep model...'
     with tf.Graph().as_default():
-        convert('dep', os.path.join(cfg.DIR_CKPT, 'dep-'+DEP_CKPT_ID))
+        convert('dep', os.path.join(cfg.DIR_BESTCKPT, 'dep-best'))
 

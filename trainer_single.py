@@ -1,6 +1,6 @@
 import tensorflow as tf
 import numpy as np
-import os, sys, time, ipdb
+import os, sys, time, shutil, ipdb
 from utils import common
 import configure as cfg 
 from architectures import model_single_channel as model
@@ -58,7 +58,7 @@ def fill_feed_dict(img_batch, lbl_batch, images_ph, labels_ph, keep_prob_ph, is_
         lbl_batch = np.pad(lbl_batch, ((0,M),(0,0)), 'constant', constant_values=0)
 
     if is_training:
-        feed_dict = {images_ph: common.random_crop(img_batch, rand_fl=True), labels_ph: lbl_batch, keep_prob_ph: 0.5}
+        feed_dict = {images_ph: common.random_crop(img_batch, rand_fl=False), labels_ph: lbl_batch, keep_prob_ph: 0.5}
     else:
         feed_dict = {images_ph: common.central_crop(img_batch), labels_ph: lbl_batch, keep_prob_ph: 1.0}
     return feed_dict
@@ -142,7 +142,7 @@ def run_training(train_lst, eval_lst, train_dir, eval_dir, tag):
 
 
     # start the training loop
-    old_precision = sys.maxsize
+    old_precision, best_precision = sys.maxsize, 0
     patience_count = 0
     print 'Start the training loop...'
     for step in range(FLAGS.max_iter):
@@ -204,6 +204,14 @@ def run_training(train_lst, eval_lst, train_dir, eval_dir, tag):
                 eval_data, eval_labels, logfile)
             common.writer('Precision: %.4f', precision, logfile)
 
+            if precision > best_precision: # backup best model so far
+                src = os.path.join(cfg.DIR_CKPT,tag+'-'+str(step))
+                dst = os.path.join(cfg.DIR_BESTCKPT,tag+'-best')
+                shutil.copyfile(src, dst)
+                src = os.path.join(cfg.DIR_CKPT,tag+'-'+str(step)+'.meta')
+                dst = os.path.join(cfg.DIR_BESTCKPT,tag+'-best.meta')
+                shutil.copyfile(src, dst)
+
             # early stopping
             to_stop, patience_count = common.early_stopping(\
                     old_precision, precision, patience_count)
@@ -225,8 +233,8 @@ def main(argv=None):
     train_dir = cfg.DIR_DATA_MASKED
     eval_dir = cfg.DIR_DATA_EVAL
 
-    with tf.Graph().as_default():
-        run_training(train_lst, eval_lst, train_dir, eval_dir, tag='rgb')
+    #with tf.Graph().as_default():
+    #    run_training(train_lst, eval_lst, train_dir, eval_dir, tag='rgb')
 
     with tf.Graph().as_default():
         run_training(train_lst, eval_lst, train_dir, eval_dir, tag='dep')

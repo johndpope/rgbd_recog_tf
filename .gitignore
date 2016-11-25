@@ -5,3 +5,4 @@ models/*
 summary/*
 checkpoints/*
 backup/*
+bestckpt/*
