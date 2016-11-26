@@ -120,7 +120,9 @@ def load_4d(lst, rgb_dir, dep_dir, process_dep=False):
 
 
 #image helpers-----------------------------------------------------------------------------------------
-def random_crop(images, rand_fl):
+def random_crop(images, rand_fl=False):
+    """ Randomly crop the whole batch of image with the same mask
+    """
     old_size = images.shape[1]
     new_size = cfg.IMG_S
     r = old_size - new_size

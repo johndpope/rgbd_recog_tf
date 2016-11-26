@@ -137,7 +137,7 @@ def loss(prob, labels, tag):
     L = -tf.reduce_sum(labels * logits, reduction_indices=1)
     loss = tf.reduce_sum(L, reduction_indices=0, name='loss')
 
-    # regularize fully connected layers
+    # regularize weights
     '''
     with tf.variable_scope(tag+'fc7'):
         fc7W = tf.get_variable('weight', [4096,4096], dtype=tf.float32)

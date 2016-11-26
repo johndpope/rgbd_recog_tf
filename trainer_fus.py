@@ -1,6 +1,6 @@
 import tensorflow as tf
 import numpy as np
-import os, sys, time, ipdb
+import os, sys, time, shutil, ipdb
 import configure as cfg
 from utils import common
 from architectures import model_fusion as model
@@ -8,7 +8,7 @@ from architectures import model_fusion as model
 
 # model parameters
 FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_integer('max_iter', 500, """Maximum number of training iteration.""")
+tf.app.flags.DEFINE_integer('max_iter', 30000, """Maximum number of training iteration.""")
 tf.app.flags.DEFINE_integer('batch_size', 200, """Numer of images to process in a batch.""")
 tf.app.flags.DEFINE_integer('img_s', cfg.IMG_S, """"Size of a square image.""")
 tf.app.flags.DEFINE_integer('n_classes', 51, """Number of classes.""")
@@ -16,7 +16,7 @@ tf.app.flags.DEFINE_float('learning_rate', 1e-3, """"Learning rate for training 
 tf.app.flags.DEFINE_integer('summary_frequency', 1, """How often to write summary.""")
 tf.app.flags.DEFINE_integer('checkpoint_frequency', 3, """How often to evaluate and write checkpoint.""")
 
-#==================================================================================================
+#=================================================================================================
 def placeholder_inputs(batch_size):
     """Create placeholders for tensorflow with some specific batch_size
 
@@ -60,13 +60,16 @@ def fill_feed_dict(rgb_batch, dep_batch, lbl_batch, rgb_ph, dep_ph, labels_ph, k
         lbl_batch = np.pad(lbl_batch, ((0,M),(0,0)), 'constant', constant_values=0)
 
     if is_training:
+        foo = common.random_crop(np.concatenate((rgb_batch, dep_batch), axis=0))
+        rgb_batch = foo[:FLAGS.batch_size]
+        dep_batch = foo[FLAGS.batch_size:]
         feed_dict = {rgb_ph:rgb_batch, dep_ph:dep_batch, labels_ph:lbl_batch, keep_prob_ph: 0.5}
     else:
-        feed_dict = {rgb_ph:rgb_batch, dep_ph:dep_batch, labels_ph:lbl_batch, keep_prob_ph: 1.0}
+        feed_dict = {rgb_ph:common.central_crop(rgb_batch), dep_ph:common.central_crop(dep_batch), labels_ph:lbl_batch, keep_prob_ph: 1.0}
     return feed_dict
 
 
-def do_eval(sess, eval_correct, rgb_ph, dep_ph, labels_ph, keep_prob_ph, all_rgb, all_dep, all_labels):
+def do_eval(sess, eval_correct, rgb_ph, dep_ph, labels_ph, keep_prob_ph, all_rgb, all_dep, all_labels, logfile):
     ''' Run one evaluation against the full epoch of data
 
     Args:
@@ -85,47 +88,53 @@ def do_eval(sess, eval_correct, rgb_ph, dep_ph, labels_ph, keep_prob_ph, all_rgb
     '''
     true_count, start_idx = 0, 0
     num_samples = all_labels.shape[0]
-    #indices = np.random.permutation(num_samples)
     indices = np.arange(num_samples)
     while start_idx != num_samples:
         stop_idx = common.next_batch(indices, start_idx, FLAGS.batch_size)
         batch_idx = indices[start_idx: stop_idx]
         
         fd = fill_feed_dict(
-                all_rgb[batch_idx], all_dep[batch_idx], all_labels[batch_idx],
-                rgb_ph, dep_ph, labels_ph, keep_prob_ph,
-                is_training=False)
+            all_rgb[batch_idx], all_dep[batch_idx], all_labels[batch_idx],
+            rgb_ph, dep_ph, labels_ph, keep_prob_ph,
+            is_training=False)
         true_count += sess.run(eval_correct, feed_dict=fd)
         start_idx = stop_idx
         
     precision = true_count*1.0 / num_samples
-    print '    Num-samples:%d   Num-correct:%d   Precision:%0.04f' % (num_samples, true_count, precision)
+    common.writer('    Num-samples:%d   Num-correct:%d   Precision:%0.04f', (num_samples, true_count, precision), logfile)
     return precision
 
 
-#==================================================================================================
-def run_training(tag='fus'):
+#=================================================================================================
+def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag='fus'):
+    logfile = open(os.path.join(cfg.DIR_LOG, 'training_'+tag+'.log'),'w',0)
+
     # load data-----------------------------------------------------------------------------------
-    print 'Loading RGB and depth models...'
+    print 'Loading color and depth models...'
     rgb_model = np.load(cfg.PTH_RGB_MODEL).item()
     dep_model = np.load(cfg.PTH_DEP_MODEL).item()
-    print 'Loading lists...'
-    with open(cfg.PTH_TRAIN_LST, 'r') as f: train_lst = f.read().splitlines()
-    with open(cfg.PTH_EVAL_LST,  'r') as f: eval_lst  = f.read().splitlines()
-    print 'Loading training data...'
-    rgb_train_data, train_labels = common.load_images(train_lst, cfg.DIR_DATA, cfg.EXT_RGB, cfg.CLASSES)
-    dep_train_data, _            = common.load_images(train_lst, cfg.DIR_DATA, cfg.EXT_D, cfg.CLASSES)
-    print 'Loading validation data...'
-    rgb_eval_data,  eval_labels  = common.load_images(eval_lst,  cfg.DIR_DATA, cfg.EXT_RGB, cfg.CLASSES)
-    dep_eval_data,  _            = common.load_images(eval_lst,  cfg.DIR_DATA, cfg.EXT_D, cfg.CLASSES)
-    num_train = rgb_train_data.shape[0]
 
-    # tensorflow variables and operations----------------------------------------------------------
+    print 'Loading lists...'
+    with open(pth_train_lst, 'r') as f: train_lst = f.read().splitlines()
+    with open(pth_eval_lst,  'r') as f: eval_lst  = f.read().splitlines()
+    #train_lst = train_lst[:10]; eval_lst = eval_lst[:10] #TODO
+
+    print 'Loading training data...'
+    rgb_train_data, train_labels = common.load_images(train_lst, train_dir, cfg.EXT_RGB, cfg.CLASSES)
+    dep_train_data, _            = common.load_images(train_lst, train_dir, cfg.EXT_D, cfg.CLASSES)
+    num_train = len(rgb_train_data)
+
+    print 'Loading validation data...'
+    rgb_eval_data,  eval_labels  = common.load_images(eval_lst,  eval_dir, cfg.EXT_RGB, cfg.CLASSES)
+    dep_eval_data,  _            = common.load_images(eval_lst,  eval_dir, cfg.EXT_D, cfg.CLASSES)
+
+
+    # tensorflow variables and operations---------------------------------------------------------
     print 'Preparing tensorflow...'
     rgb_ph, dep_ph, labels_ph, keep_prob_ph = placeholder_inputs(FLAGS.batch_size)
 
     prob = model.inference(rgb_ph, dep_ph, rgb_model, dep_model, keep_prob_ph)
-    loss = model.loss(prob, labels_ph)
+    loss = model.loss(prob, labels_ph, rgb_model, dep_model)
     train_op = model.training(loss)
     eval_correct = model.evaluation(prob, labels_ph)
     init_op = tf.initialize_all_variables()
@@ -140,11 +149,11 @@ def run_training(tag='fus'):
     sess.run(init_op)
 
     # start the training loop
-    old_precision = sys.maxsize
+    old_precision, best_precision = sys.maxsize, 0
     patience_count = 0
     print 'Start the training loop...'
     for step in range(FLAGS.max_iter):
-        # training phase----------------------------------------------------------------------------
+        # training phase--------------------------------------------------------------------------
         start_time = time.time()
 
         # shuffle indices
@@ -152,13 +161,18 @@ def run_training(tag='fus'):
 
         # train by batches
         total_loss, start_idx = 0, 0
+        lim = 10
         while start_idx != num_train:
+            if start_idx*100.0 / num_train > lim:
+                print 'Trained %d / %d' % (start_idx, num_train)
+                lim += 10
+
             stop_idx = common.next_batch(indices, start_idx, FLAGS.batch_size)
             batch_idx = indices[start_idx: stop_idx]
 
             fd = fill_feed_dict(
-                    rgb_train_data[batch_idx], dep_train_data[batch_idx], train_labels[batch_idx],
-                    rgb_ph, dep_ph, labels_ph, keep_prob_ph, is_training=True)
+                rgb_train_data[batch_idx], dep_train_data[batch_idx], train_labels[batch_idx],
+                rgb_ph, dep_ph, labels_ph, keep_prob_ph, is_training=True)
             _, loss_value = sess.run([train_op, loss], feed_dict=fd)
             assert not np.isnan(loss_value), 'Loss value is NaN'
 
@@ -167,44 +181,65 @@ def run_training(tag='fus'):
 
         duration = time.time() - start_time
 
-        # write summary----------------------------------------------------------------------------
+
+        # write summary---------------------------------------------------------------------------
         if step % FLAGS.summary_frequency == 0:
-            print 'Step %d: loss = %.3f (%.3f sec)' % (step, total_loss, duration)
+            common.writer('Step %d: loss = %.3f (%.3f sec)', (step,total_loss,duration), logfile)
             summary_str = sess.run(summary, feed_dict=fd)
             summary_writer.add_summary(summary_str, step)
             summary_writer.flush()
         else:
-            print 'Step', step, ' '
+            common.writer('Step', step, logfile)
 
 
-        # write checkpoint-------------------------------------------------------------------------
+        # write checkpoint------------------------------------------------------------------------
         if step % FLAGS.checkpoint_frequency == 0 or (step+1) == FLAGS.max_iter:
             checkpoint_file = os.path.join(cfg.DIR_CKPT, tag)
             saver.save(sess, checkpoint_file, global_step=step)
 
-            print '  Training data eval:'
+            common.writer('  Training data eval:', (), logfile)
             do_eval(
-                    sess, eval_correct, rgb_ph, dep_ph, labels_ph, keep_prob_ph, 
-                    rgb_train_data, dep_train_data, train_labels)
+                sess, eval_correct, rgb_ph, dep_ph, labels_ph, keep_prob_ph, 
+                rgb_train_data, dep_train_data, train_labels, logfile)
 
-            print '  Validation data eval:'
+            common.writer('  Validation data eval:', (), logfile)
             precision = do_eval(
-                    sess, eval_correct, rgb_ph, dep_ph, labels_ph, keep_prob_ph,
-                    rgb_eval_data, dep_eval_data, eval_labels)
+                sess, eval_correct, rgb_ph, dep_ph, labels_ph, keep_prob_ph,
+                rgb_eval_data, dep_eval_data, eval_labels, logfile)
+            common.writer('Precision: %.4f', precision, logfile)
+
+            if precision > best_precision: # backup best model so far
+                src = os.path.join(cfg.DIR_CKPT,tag+'-'+str(step))
+                dst = os.path.join(cfg.DIR_BESTCKPT,tag+'-best')
+                shutil.copyfile(src, dst)
+                src = os.path.join(cfg.DIR_CKPT,tag+'-'+str(step)+'.meta')
+                dst = os.path.join(cfg.DIR_BESTCKPT,tag+'-best.meta')
+                shutil.copyfile(src, dst)
+                best_precision = precision
 
             # early stopping
-            to_stop, patience_count = common.early_stopping(old_precision, precision, patience_count)
+            to_stop, patience_count = common.early_stopping(\
+                    old_precision, precision, patience_count)
             old_precision = precision
             if to_stop:
-                print 'Early stopping...'
+                common.writer('Early stopping...', (), logfile)
                 break
+    logfile.close()
     return
 
 
-#==================================================================================================
+#=================================================================================================
 def main(argv=None):
+    trial = 0
+    print 'Trial: %d' % trial
+
+    pth_train_lst = cfg.PTH_TRAIN_LST[trial]
+    pth_eval_lst  = cfg.PTH_EVAL_LST[trial]
+    train_dir = cfg.DIR_DATA_MASKED
+    eval_dir  = cfg.DIR_DATA_EVAL
+
     with tf.Graph().as_default():
-        run_training()
+        run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag='fus')
     return
 
 

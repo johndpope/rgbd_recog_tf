@@ -100,7 +100,7 @@ def do_eval(sess, eval_correct, images_ph, labels_ph, keep_prob_ph, all_data, al
 
 
 #=========================================================================================
-def run_training(train_lst, eval_lst, train_dir, eval_dir, tag):
+def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag):
     logfile = open(os.path.join(cfg.DIR_LOG, 'training_'+tag+'.log'), 'w', 0)
 
     # load data
@@ -108,8 +108,8 @@ def run_training(train_lst, eval_lst, train_dir, eval_dir, tag):
     net_data = np.load(cfg.PTH_WEIGHT_ALEX).item()
 
     print 'Loading lists...'
-    with open(train_lst, 'r') as f: train_lst = f.read().splitlines()
-    with open(eval_lst, 'r') as  f: eval_lst  = f.read().splitlines()
+    with open(pth_train_lst, 'r') as f: train_lst = f.read().splitlines()
+    with open(pth_eval_lst, 'r') as  f: eval_lst  = f.read().splitlines()
     if tag == 'rgb': ext = cfg.EXT_RGB
     elif tag == 'dep': ext = cfg.EXT_D
     #train_lst = train_lst[:10] #TODO
@@ -178,7 +178,7 @@ def run_training(train_lst, eval_lst, train_dir, eval_dir, tag):
 
         # write summary------------------------------------------------
         if step % FLAGS.summary_frequency == 0:
-            common.writer('Step %d: loss = %.3f (%.3f sec)', (step, total_loss, duration), logfile)
+            common.writer('Step %d: loss = %.3f (%.3f sec)', (step,total_loss,duration), logfile)
             summary_str = sess.run(summary, feed_dict=fd)
             summary_writer.add_summary(summary_str, step)
             summary_writer.flush()
@@ -211,6 +211,7 @@ def run_training(train_lst, eval_lst, train_dir, eval_dir, tag):
                 src = os.path.join(cfg.DIR_CKPT,tag+'-'+str(step)+'.meta')
                 dst = os.path.join(cfg.DIR_BESTCKPT,tag+'-best.meta')
                 shutil.copyfile(src, dst)
+                best_precision = precision
 
             # early stopping
             to_stop, patience_count = common.early_stopping(\
@@ -228,16 +229,16 @@ def main(argv=None):
     trial = 0
     print 'Trial: %d' % trial
 
-    train_lst = cfg.PTH_TRAIN_LST[trial]
-    eval_lst = cfg.PTH_EVAL_LST[trial]
+    pth_train_lst = cfg.PTH_TRAIN_LST[trial]
+    pth_eval_lst = cfg.PTH_EVAL_LST[trial]
     train_dir = cfg.DIR_DATA_MASKED
     eval_dir = cfg.DIR_DATA_EVAL
 
-    #with tf.Graph().as_default():
-    #    run_training(train_lst, eval_lst, train_dir, eval_dir, tag='rgb')
+    with tf.Graph().as_default():
+        run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag='rgb')
 
     with tf.Graph().as_default():
-        run_training(train_lst, eval_lst, train_dir, eval_dir, tag='dep')
+        run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag='dep')
 
 
 if __name__ == '__main__':
