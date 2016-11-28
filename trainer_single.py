@@ -229,7 +229,8 @@ def main(argv=None):
     trial = 0
     print 'Trial: %d' % trial
 
-    pth_train_lst = cfg.PTH_TRAIN_LST[trial]
+    #pth_train_lst = cfg.PTH_TRAIN_LST[trial]
+    pth_train_lst = cfg.PTH_TRAIN_SHORT_LST[trial]
     pth_eval_lst = cfg.PTH_EVAL_LST[trial]
     train_dir = cfg.DIR_DATA_MASKED
     eval_dir = cfg.DIR_DATA_EVAL

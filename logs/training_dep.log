@@ -1,87 +1,119 @@
-Step 0: loss = 497449.703 (1405.554 sec)
+Step 0: loss = 133099.429 (249.971 sec)
   Training data eval:
-    Num-samples:172788   Num-correct:158550   Precision:0.9176
+    Num-samples:34844   Num-correct:8927   Precision:0.2562
   Validation data eval:
-    Num-samples:7033   Num-correct:5512   Precision:0.7837
-Precision: 0.7837
-Step 1: loss = 166170.596 (2385.759 sec)
-Step 2: loss = 86417.347 (2530.596 sec)
-Step 3: loss = 62356.967 (2575.225 sec)
+    Num-samples:7033   Num-correct:1430   Precision:0.2033
+Precision: 0.2033
+Step 1: loss = 105229.217 (204.367 sec)
+Step 2: loss = 88765.683 (204.332 sec)
+Step 3: loss = 69210.889 (203.212 sec)
   Training data eval:
-    Num-samples:172788   Num-correct:172593   Precision:0.9989
+    Num-samples:34844   Num-correct:31419   Precision:0.9017
+  Validation data eval:
+    Num-samples:7033   Num-correct:5490   Precision:0.7806
+Precision: 0.7806
+Step 4: loss = 51821.906 (203.366 sec)
+Step 5: loss = 42170.805 (202.042 sec)
+Step 6: loss = 34305.232 (201.798 sec)
+  Training data eval:
+    Num-samples:34844   Num-correct:34200   Precision:0.9815
+  Validation data eval:
+    Num-samples:7033   Num-correct:6093   Precision:0.8663
+Precision: 0.8663
+Step 7: loss = 28925.376 (201.448 sec)
+Step 8: loss = 26256.472 (201.326 sec)
+Step 9: loss = 25275.944 (201.069 sec)
+  Training data eval:
+    Num-samples:34844   Num-correct:34417   Precision:0.9877
+  Validation data eval:
+    Num-samples:7033   Num-correct:6048   Precision:0.8599
+Precision: 0.8599
+Step 10: loss = 22690.122 (200.660 sec)
+Step 11: loss = 20729.607 (201.062 sec)
+Step 12: loss = 18999.093 (200.777 sec)
+  Training data eval:
+    Num-samples:34844   Num-correct:34754   Precision:0.9974
+  Validation data eval:
+    Num-samples:7033   Num-correct:6214   Precision:0.8835
+Precision: 0.8835
+Step 13: loss = 17484.721 (200.630 sec)
+Step 14: loss = 17178.230 (200.135 sec)
+Step 15: loss = 16024.387 (200.295 sec)
+  Training data eval:
+    Num-samples:34844   Num-correct:34793   Precision:0.9985
+  Validation data eval:
+    Num-samples:7033   Num-correct:6261   Precision:0.8902
+Precision: 0.8902
+Step 16: loss = 15047.315 (200.387 sec)
+Step 17: loss = 13679.197 (200.191 sec)
+Step 18: loss = 13300.095 (200.149 sec)
+  Training data eval:
+    Num-samples:34844   Num-correct:34811   Precision:0.9991
   Validation data eval:
     Num-samples:7033   Num-correct:6254   Precision:0.8892
 Precision: 0.8892
-Step 4: loss = 50409.225 (2411.614 sec)
-Step 5: loss = 43490.469 (2413.171 sec)
-Step 6: loss = 40534.194 (2412.495 sec)
+Step 19: loss = 13386.845 (200.167 sec)
+Step 20: loss = 12927.853 (199.629 sec)
+Step 21: loss = 12075.599 (200.215 sec)
   Training data eval:
-    Num-samples:172788   Num-correct:172765   Precision:0.9999
+    Num-samples:34844   Num-correct:34826   Precision:0.9995
   Validation data eval:
-    Num-samples:7033   Num-correct:6370   Precision:0.9057
-Precision: 0.9057
-Step 7: loss = 36655.954 (2398.948 sec)
-Step 8: loss = 36029.630 (2396.231 sec)
-Step 9: loss = 34239.969 (2398.465 sec)
+    Num-samples:7033   Num-correct:6325   Precision:0.8993
+Precision: 0.8993
+Step 22: loss = 11936.694 (199.913 sec)
+Step 23: loss = 11692.402 (199.742 sec)
+Step 24: loss = 11555.674 (199.798 sec)
   Training data eval:
-    Num-samples:172788   Num-correct:172769   Precision:0.9999
+    Num-samples:34844   Num-correct:34832   Precision:0.9997
   Validation data eval:
-    Num-samples:7033   Num-correct:6309   Precision:0.8971
-Precision: 0.8971
-Step 10: loss = 31044.064 (2394.184 sec)
-Step 11: loss = 30571.362 (2398.664 sec)
-Step 12: loss = 29494.549 (2400.912 sec)
+    Num-samples:7033   Num-correct:6308   Precision:0.8969
+Precision: 0.8969
+Step 25: loss = 10759.985 (200.053 sec)
+Step 26: loss = 10707.687 (199.764 sec)
+Step 27: loss = 10180.309 (199.936 sec)
   Training data eval:
-    Num-samples:172788   Num-correct:172779   Precision:0.9999
+    Num-samples:34844   Num-correct:34832   Precision:0.9997
   Validation data eval:
-    Num-samples:7033   Num-correct:6421   Precision:0.9130
-Precision: 0.9130
-Step 13: loss = 29255.698 (1235.546 sec)
-Step 14: loss = 27437.176 (1242.907 sec)
-Step 15: loss = 27520.212 (1246.736 sec)
+    Num-samples:7033   Num-correct:6165   Precision:0.8766
+Precision: 0.8766
+Step 28: loss = 9719.186 (199.462 sec)
+Step 29: loss = 9648.475 (199.147 sec)
+Step 30: loss = 9815.073 (199.353 sec)
   Training data eval:
-    Num-samples:172788   Num-correct:172779   Precision:0.9999
+    Num-samples:34844   Num-correct:34818   Precision:0.9993
   Validation data eval:
-    Num-samples:7033   Num-correct:6362   Precision:0.9046
-Precision: 0.9046
-Step 16: loss = 27346.869 (1248.904 sec)
-Step 17: loss = 26966.218 (1248.686 sec)
-Step 18: loss = 25942.315 (1248.553 sec)
+    Num-samples:7033   Num-correct:6273   Precision:0.8919
+Precision: 0.8919
+Step 31: loss = 10094.689 (199.364 sec)
+Step 32: loss = 9241.632 (198.721 sec)
+Step 33: loss = 8507.067 (198.712 sec)
   Training data eval:
-    Num-samples:172788   Num-correct:172794   Precision:1.0000
+    Num-samples:34844   Num-correct:34837   Precision:0.9998
   Validation data eval:
-    Num-samples:7033   Num-correct:6482   Precision:0.9217
-Precision: 0.9217
-Step 19: loss = 26123.799 (1250.436 sec)
-Step 20: loss = 24038.374 (1249.715 sec)
-Step 21: loss = 25256.546 (1249.480 sec)
+    Num-samples:7033   Num-correct:6268   Precision:0.8912
+Precision: 0.8912
+Step 34: loss = 8398.532 (199.018 sec)
+Step 35: loss = 9163.804 (199.115 sec)
+Step 36: loss = 9115.633 (199.356 sec)
   Training data eval:
-    Num-samples:172788   Num-correct:172797   Precision:1.0001
+    Num-samples:34844   Num-correct:34835   Precision:0.9997
   Validation data eval:
-    Num-samples:7033   Num-correct:6513   Precision:0.9261
-Precision: 0.9261
-Step 22: loss = 28142.558 (1250.585 sec)
-Step 23: loss = 23551.761 (1250.879 sec)
-Step 24: loss = 21878.269 (1250.907 sec)
+    Num-samples:7033   Num-correct:6308   Precision:0.8969
+Precision: 0.8969
+Step 37: loss = 8544.198 (199.022 sec)
+Step 38: loss = 8866.202 (199.637 sec)
+Step 39: loss = 8127.810 (198.818 sec)
   Training data eval:
-    Num-samples:172788   Num-correct:172786   Precision:1.0000
+    Num-samples:34844   Num-correct:34836   Precision:0.9998
   Validation data eval:
-    Num-samples:7033   Num-correct:6338   Precision:0.9012
-Precision: 0.9012
-Step 25: loss = 23061.907 (1242.229 sec)
-Step 26: loss = 23824.140 (1243.080 sec)
-Step 27: loss = 24542.958 (1245.240 sec)
+    Num-samples:7033   Num-correct:6303   Precision:0.8962
+Precision: 0.8962
+Step 40: loss = 8145.721 (198.890 sec)
+Step 41: loss = 9343.762 (199.019 sec)
+Step 42: loss = 8065.930 (199.030 sec)
   Training data eval:
-    Num-samples:172788   Num-correct:172785   Precision:1.0000
+    Num-samples:34844   Num-correct:34835   Precision:0.9997
   Validation data eval:
-    Num-samples:7033   Num-correct:6330   Precision:0.9000
-Precision: 0.9000
-Step 28: loss = 22391.979 (1249.614 sec)
-Step 29: loss = 22177.208 (1249.101 sec)
-Step 30: loss = 23047.755 (1249.311 sec)
-  Training data eval:
-    Num-samples:172788   Num-correct:172785   Precision:1.0000
-  Validation data eval:
-    Num-samples:7033   Num-correct:6335   Precision:0.9008
-Precision: 0.9008
+    Num-samples:7033   Num-correct:6275   Precision:0.8922
+Precision: 0.8922
 Early stopping...
