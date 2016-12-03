@@ -20,6 +20,18 @@ def writer(msg, params, f):
     f.write(msg % params)
     return
 
+
+def write_prob(prob, labels, tag, step):
+    f = open(os.path.join(cfg.DIR_PROB, tag+'_'+str(step)+'.txt'), 'a')
+    N = len(labels)
+    for i in range(N):
+        line = prob[i]
+        for j in line: f.write('%f ' % j)
+        f.write('%d %d\n' % (np.argmax(line), np.argmax(labels[i])))
+    f.close()
+    return
+
+
 #batch manager-------------------------------------------------------------------------------------------
 def next_batch(indices, start_idx, batch_size):
     N = indices.shape[0]

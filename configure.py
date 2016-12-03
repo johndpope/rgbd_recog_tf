@@ -8,6 +8,7 @@ DIR_MODEL       = 'models'
 DIR_SUMMARY     = 'summary'
 DIR_LOG         = 'logs'
 DIR_BESTCKPT    = 'bestckpt'
+DIR_PROB        = 'recogprob'
 
 DIR_DATA_RAW      = os.path.join(DIR_HOME, 'data', 'rgbd-dataset')
 DIR_DATA          = os.path.join(DIR_HOME, 'data', 'rgbd-dataset-processed')

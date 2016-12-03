@@ -51,7 +51,7 @@ def training(loss, learning_rate=None):
         learning_rate = FLAGS.learning_rate
 
     # Add a scalar summary for the snapshot loss
-    tf.scalar_summary(loss.op.name, loss)
+    tf.scalar_summary('loss', loss)
 
     # Create the optimizer with given learning rate
     #optimizer = tf.train.AdagradOptimizer(learning_rate)
@@ -79,7 +79,6 @@ def evaluation(prob, labels):
     correct = tf.nn.in_top_k(prob, id_labels, 1) # TODO: fix k
 
     # add to summary
-    tf.summary.tensor_summary('probability', prob)
-    tf.summary.tensor_summary('prediction', correct)
-    tf.summary.tensor_summary('ground truth', id_labels)
+    tf.histogram_summary('probability', prob)
+    tf.histogram_summary('ground truth', id_labels)
     return tf.reduce_sum(tf.cast(correct, tf.int32))

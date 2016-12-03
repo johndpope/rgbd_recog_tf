@@ -64,17 +64,19 @@ def fill_feed_dict(img_batch, lbl_batch, images_ph, labels_ph, keep_prob_ph, is_
     return feed_dict
 
 
-def do_eval(sess, eval_correct, images_ph, labels_ph, keep_prob_ph, all_data, all_labels, logfile):
+def do_eval(sess, prob, eval_correct, images_ph, labels_ph, keep_prob_ph, all_data, all_labels, logfile, tag, step):
     ''' Run one evaluation against the full epoch of data
 
     Args:
         sess: the session in which the model has been trained
+        prob: probability operator
         eval_correct: the tensor that returns the number of correct predictions
         images_ph: tensor place holder for images
         labels_ph: tensor place holder for labels
         keep_prob_ph: tensor place holder for keep_prob
         all_data: all loaded images
         all_labels: all labels corresponding to all_images
+        logfile: opened logfile
 
     Return
         precision: percentage of correct recognition
@@ -90,6 +92,8 @@ def do_eval(sess, eval_correct, images_ph, labels_ph, keep_prob_ph, all_data, al
             all_data[batch_idx], all_labels[batch_idx], 
             images_ph, labels_ph, keep_prob_ph, 
             is_training=False)
+        prob_val = sess.run(prob, feed_dict=fd)
+        common.write_prob(prob_val, all_labels[batch_idx], tag, step)
         true_count += sess.run(eval_correct, feed_dict=fd)
         start_idx = stop_idx
 
@@ -193,15 +197,17 @@ def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag):
             
             common.writer('  Training data eval:', (), logfile)
             do_eval(
-                sess, eval_correct, 
+                sess, prob, eval_correct, 
                 images_ph, labels_ph, keep_prob_ph, 
-                train_data, train_labels, logfile)
+                train_data, train_labels, 
+                logfile, tag+'train', step)
 
             common.writer('  Validation data eval:', (), logfile)
             precision = do_eval(
-                sess, eval_correct, 
+                sess, prob, eval_correct, 
                 images_ph, labels_ph, keep_prob_ph, 
-                eval_data, eval_labels, logfile)
+                eval_data, eval_labels, 
+                logfile, tag+'eval', step)
             common.writer('Precision: %.4f', precision, logfile)
 
             if precision > best_precision: # backup best model so far
@@ -229,8 +235,8 @@ def main(argv=None):
     trial = 0
     print 'Trial: %d' % trial
 
-    pth_train_lst = cfg.PTH_TRAIN_LST[trial]
-    #pth_train_lst = cfg.PTH_TRAIN_SHORT_LST[trial]
+    #pth_train_lst = cfg.PTH_TRAIN_LST[trial]
+    pth_train_lst = cfg.PTH_TRAIN_SHORT_LST[trial]
     pth_eval_lst = cfg.PTH_EVAL_LST[trial]
     train_dir = cfg.DIR_DATA_MASKED
     eval_dir = cfg.DIR_DATA_EVAL
