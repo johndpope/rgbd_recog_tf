@@ -76,5 +76,5 @@ def evaluation(prob, labels):
         Number of correct classification
     """
     id_labels = tf.argmax(labels, dimension=1) # convert from binary sequences to class id
-    correct = tf.nn.in_top_k(prob, id_labels, 5) # TODO: fix k
+    correct = tf.nn.in_top_k(prob, id_labels, 1) # TODO: fix k
     return tf.reduce_sum(tf.cast(correct, tf.int32))
