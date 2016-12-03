@@ -42,7 +42,7 @@ def next_batch(indices, start_idx, batch_size):
     return stop_idx
 
 
-def early_stopping(old_val, new_val, patience_count, tolerance=1e-2, patience_limit=3):
+def early_stopping(old_val, new_val, patience_count, tolerance=1e-2, patience_limit=5):
     to_stop = False
     improvement = new_val - old_val
     if improvement < tolerance:

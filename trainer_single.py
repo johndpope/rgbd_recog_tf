@@ -8,7 +8,7 @@ from architectures import model_single_channel as model
 
 # model parameters
 FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_integer('max_iter', 30000, """Maximum number of training iteration.""")
+tf.app.flags.DEFINE_integer('max_iter', 100, """Maximum number of training iteration.""")
 tf.app.flags.DEFINE_integer('batch_size', 400, """Numer of images to process in a batch.""")
 tf.app.flags.DEFINE_integer('img_s', cfg.IMG_S, """"Size of a square image.""")
 tf.app.flags.DEFINE_integer('img_s_raw', 256, """"Size of a square image.""")
@@ -146,7 +146,7 @@ def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag):
 
 
     # start the training loop
-    old_precision, best_precision = sys.maxsize, 0
+    old_loss, best_precision = sys.maxsize, 0
     patience_count = 0
     print 'Start the training loop...'
     for step in range(FLAGS.max_iter):
@@ -219,13 +219,13 @@ def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag):
                 shutil.copyfile(src, dst)
                 best_precision = precision
 
-            # early stopping
-            to_stop, patience_count = common.early_stopping(\
-                    old_precision, precision, patience_count)
-            old_precision = precision
-            if to_stop: 
-                common.writer('Early stopping...', (), logfile)
-                break
+        # early stopping-----------------------------------------------
+        to_stop, patience_count = common.early_stopping(\
+                old_loss, total_loss, patience_count)
+        old_loss = total_loss
+        if to_stop: 
+            common.writer('Early stopping...', (), logfile)
+            break
     logfile.close()
     return
 

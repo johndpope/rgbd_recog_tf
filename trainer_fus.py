@@ -8,7 +8,7 @@ from architectures import model_fusion as model
 
 # model parameters
 FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_integer('max_iter', 30000, """Maximum number of training iteration.""")
+tf.app.flags.DEFINE_integer('max_iter', 200, """Maximum number of training iteration.""")
 tf.app.flags.DEFINE_integer('batch_size', 200, """Numer of images to process in a batch.""")
 tf.app.flags.DEFINE_integer('img_s', cfg.IMG_S, """"Size of a square image.""")
 tf.app.flags.DEFINE_integer('n_classes', 51, """Number of classes.""")
@@ -69,7 +69,7 @@ def fill_feed_dict(rgb_batch, dep_batch, lbl_batch, rgb_ph, dep_ph, labels_ph, k
     return feed_dict
 
 
-def do_eval(sess, eval_correct, rgb_ph, dep_ph, labels_ph, keep_prob_ph, all_rgb, all_dep, all_labels, logfile):
+def do_eval(sess, prob, eval_correct, rgb_ph, dep_ph, labels_ph, keep_prob_ph, all_rgb, all_dep, all_labels, logfile, tag, step):
     ''' Run one evaluation against the full epoch of data
 
     Args:
@@ -97,6 +97,8 @@ def do_eval(sess, eval_correct, rgb_ph, dep_ph, labels_ph, keep_prob_ph, all_rgb
             all_rgb[batch_idx], all_dep[batch_idx], all_labels[batch_idx],
             rgb_ph, dep_ph, labels_ph, keep_prob_ph,
             is_training=False)
+        prob_val = sess.run(prob, feed_dict=fd)
+        common.write_prob(prob_val, all_labels[batch_idx], tag, step)
         true_count += sess.run(eval_correct, feed_dict=fd)
         start_idx = stop_idx
         
@@ -109,7 +111,7 @@ def do_eval(sess, eval_correct, rgb_ph, dep_ph, labels_ph, keep_prob_ph, all_rgb
 def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag='fus'):
     logfile = open(os.path.join(cfg.DIR_LOG, 'training_'+tag+'.log'),'w',0)
 
-    # load data-----------------------------------------------------------------------------------
+    # load data-----------------------------------------------------------------
     print 'Loading color and depth models...'
     rgb_model = np.load(cfg.PTH_RGB_MODEL).item()
     dep_model = np.load(cfg.PTH_DEP_MODEL).item()
@@ -129,7 +131,7 @@ def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag='fus'):
     dep_eval_data,  _            = common.load_images(eval_lst,  eval_dir, cfg.EXT_D, cfg.CLASSES)
 
 
-    # tensorflow variables and operations---------------------------------------------------------
+    # tensorflow variables and operations---------------------------------------
     print 'Preparing tensorflow...'
     rgb_ph, dep_ph, labels_ph, keep_prob_ph = placeholder_inputs(FLAGS.batch_size)
 
@@ -149,11 +151,11 @@ def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag='fus'):
     sess.run(init_op)
 
     # start the training loop
-    old_precision, best_precision = sys.maxsize, 0
+    old_loss, best_precision = sys.maxsize, 0
     patience_count = 0
     print 'Start the training loop...'
     for step in range(FLAGS.max_iter):
-        # training phase--------------------------------------------------------------------------
+        # training phase-------------------------------------------------------
         start_time = time.time()
 
         # shuffle indices
@@ -182,7 +184,7 @@ def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag='fus'):
         duration = time.time() - start_time
 
 
-        # write summary---------------------------------------------------------------------------
+        # write summary--------------------------------------------------------
         if step % FLAGS.summary_frequency == 0:
             common.writer('Step %d: loss = %.3f (%.3f sec)', (step,total_loss,duration), logfile)
             summary_str = sess.run(summary, feed_dict=fd)
@@ -192,7 +194,7 @@ def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag='fus'):
             common.writer('Step', step, logfile)
 
 
-        # write checkpoint------------------------------------------------------------------------
+        # write checkpoint------------------------------------------------------
         if step % FLAGS.checkpoint_frequency == 0 or (step+1) == FLAGS.max_iter:
             checkpoint_file = os.path.join(cfg.DIR_CKPT, tag)
             saver.save(sess, checkpoint_file, global_step=step)
@@ -217,13 +219,13 @@ def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag='fus'):
                 shutil.copyfile(src, dst)
                 best_precision = precision
 
-            # early stopping
-            to_stop, patience_count = common.early_stopping(\
-                    old_precision, precision, patience_count)
-            old_precision = precision
-            if to_stop:
-                common.writer('Early stopping...', (), logfile)
-                break
+        # early stopping-------------------------------------------------------
+        to_stop, patience_count = common.early_stopping(\
+                old_loss, total_loss, patience_count)
+        old_loss = total_loss
+        if to_stop:
+            common.writer('Early stopping...', (), logfile)
+            break
     logfile.close()
     return
 
@@ -233,8 +235,8 @@ def main(argv=None):
     trial = 0
     print 'Trial: %d' % trial
 
-    pth_train_lst = cfg.PTH_TRAIN_LST[trial]
-    #pth_train_lst = cfg.PTH_TRAIN_SHORT_LST[trial]
+    #pth_train_lst = cfg.PTH_TRAIN_LST[trial]
+    pth_train_lst = cfg.PTH_TRAIN_SHORT_LST[trial]
     pth_eval_lst  = cfg.PTH_EVAL_LST[trial]
     train_dir = cfg.DIR_DATA_MASKED
     eval_dir  = cfg.DIR_DATA_EVAL
