@@ -5,7 +5,7 @@ import os, ipdb
 
 
 EXPERIMENT = 'rgbeval_9'
-N_SAMPLES = 300
+N_SAMPLES = 150
 
 if __name__ == '__main__':
     pth = os.path.join(cfg.DIR_PROB, EXPERIMENT+'.txt')
@@ -14,7 +14,8 @@ if __name__ == '__main__':
     prob = data[:,:51]
     predict = data[:,51]
     lbl = data[:,52].astype(np.int32)
-    truth = np.zeros((N,51)); truth[:,lbl]=1
+    truth = np.zeros((N,51));
+    for i in range(N): truth[i,lbl[i]] = 1
 
     plt.figure()
     ids = np.random.choice(N, N_SAMPLES, replace=False)
