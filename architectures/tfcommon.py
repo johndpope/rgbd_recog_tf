@@ -1,4 +1,4 @@
-import os
+import os, ipdb
 import tensorflow as tf
 import numpy as np
 
@@ -77,4 +77,9 @@ def evaluation(prob, labels):
     """
     id_labels = tf.argmax(labels, dimension=1) # convert from binary sequences to class id
     correct = tf.nn.in_top_k(prob, id_labels, 1) # TODO: fix k
+
+    # add to summary
+    tf.summary.tensor_summary('probability', prob)
+    tf.summary.tensor_summary('prediction', correct)
+    tf.summary.tensor_summary('ground truth', id_labels)
     return tf.reduce_sum(tf.cast(correct, tf.int32))

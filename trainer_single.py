@@ -112,7 +112,7 @@ def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag):
     with open(pth_eval_lst, 'r') as  f: eval_lst  = f.read().splitlines()
     if tag == 'rgb': ext = cfg.EXT_RGB
     elif tag == 'dep': ext = cfg.EXT_D
-    #train_lst = train_lst[:10] #TODO
+    #train_lst = train_lst[:10]; eval_lst=eval_lst[:10] #TODO
 
     print 'Loading training data...'
     train_data, train_labels = common.load_images(train_lst, train_dir, ext, cfg.CLASSES)
