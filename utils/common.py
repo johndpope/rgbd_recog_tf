@@ -91,6 +91,18 @@ def load_images(lst, data_dir, ext, classes, IMG_S=256):
     return images, labels
 
 
+def load_feat(lst, data_dir, ext, classes):
+    N = len(lst)
+    features = np.zeros((N,4096), dtype=np.float32)
+    labels = np.zeros((N, len(classes)), dtype=np.float32)
+    for i in range(N):
+        pth = os.path.join(data_dir,lst[i]+ext)
+        f = np.load(pth)
+        features[i] = f
+        labels[i, parse_label(lst[i], classes)] = 1.0
+    return features, labels
+
+
 from preprocess_4d import resize_dep
 def load_4d(lst, rgb_dir, dep_dir, process_dep=False):
     N = len(lst)

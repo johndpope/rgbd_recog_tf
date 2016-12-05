@@ -17,12 +17,15 @@ DIR_DATA_4D       = os.path.join(DIR_HOME, 'data', 'rgbd-dataset-processed4d')
 DIR_DATA_EVAL_RAW = os.path.join(DIR_HOME, 'data', 'rgbd-dataset_eval')
 DIR_DATA_EVAL     = os.path.join(DIR_HOME, 'data', 'rgbd-dataset_eval-processed')
 
+DIR_DATA_MASKED_FEAT = os.path.join(DIR_HOME, 'data', 'rgbd-dataset-feat-masked')
+
 DIR_DATA_AUX      = os.path.join(DIR_HOME, 'data', 'rgbd-aux')
 if not os.path.exists(DIR_DATA_AUX): os.makedirs(DIR_DATA_AUX)
 
 # Lists
 #PTH_FULLTRAIN_LST    = os.path.join(DIR_LST, 'fulltrain.lst')
 #PTH_FULLEVAL_LST     = os.path.join(DIR_LST, 'fulleval.lst')
+PTH_FULL_LST         = os.path.join(DIR_LST, 'fulllist.lst')
 PTH_TRAIN_LST        = [os.path.join(DIR_LST, 'train_'+str(trial+1)+'.lst') for trial in range(10)]
 PTH_TRAIN_SHORT_LST  = [os.path.join(DIR_LST, 'train_short_'+str(trial+1)+'.lst') for trial in range(10)]
 PTH_EVAL_LST         = [os.path.join(DIR_LST, 'eval_'+str(trial+1)+'.lst') for trial in range(10)]
@@ -53,3 +56,5 @@ EXT_RGB         = '_crop.png'
 EXT_D           = '_depthcrop.png'
 EXT_MASK        = '_maskcrop.png'
 EXT_4D          = '.npy'
+EXT_RGB_FEAT    = '_crop.npy'
+EXT_D_FEAT      = '_depthcrop.npy'

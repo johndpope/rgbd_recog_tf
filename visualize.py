@@ -2,23 +2,30 @@ import matplotlib.pyplot as plt
 import numpy as np
 import configure as cfg
 import os, ipdb
+from sklearn.metrics import confusion_matrix
 
 
 EXPERIMENT = 'rgbeval_9'
 N_SAMPLES = 100
 
 if __name__ == '__main__':
+    # load data
     pth = os.path.join(cfg.DIR_PROB, EXPERIMENT+'.txt')
     data = np.loadtxt(pth)
     N = len(data)
     prob = data[:,:51]
-    predict = data[:,51]
-    lbl = data[:,52].astype(np.int32)
+    y_pred = data[:,51].astype(np.int32)
+    y_true = data[:,52].astype(np.int32)
 
-    truth = np.zeros((N,51))
+    y_true_arr = np.zeros((N,51))
     for i in range(N): 
-        truth[i,lbl[i]] = 1
+        y_true_arr[i,y_true[i]] = 1
 
+    # analyze
+    conf_matrix = confusion_matrix(y_true, y_pred)
+
+    # plot
+    '''
     plt.figure()
     ids = np.random.choice(N, N_SAMPLES, replace=False)
     plt.subplot(1,2,1)
@@ -34,5 +41,7 @@ if __name__ == '__main__':
     plt.plot(lbl[ids], 'r-', label='truth')
     plt.legend()
     plt.title('top-1 prediction + groundtruth')
-
+    '''
+    plt.figure()
+    plt.imshow(conf_matrix)
     plt.show()

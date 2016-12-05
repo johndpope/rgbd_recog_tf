@@ -138,7 +138,7 @@ def make_trial_split():
 
 
 if __name__ == '__main__':
-    #make_full_list(cfg.DIR_DATA_RAW, cfg.PTH_FULLTRAIN_LST)
+    #make_full_list(cfg.DIR_DATA_RAW, cfg.PTH_FULL_LST)
     #make_full_list(cfg.DIR_DATA_EVAL_RAW, cfg.PTH_FULLEVAL_LST)
 
     trial_splits = make_trial_split()
