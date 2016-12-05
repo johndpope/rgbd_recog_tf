@@ -5,7 +5,7 @@ import os, ipdb
 from sklearn.metrics import confusion_matrix
 
 
-EXPERIMENT = 'rgbeval_9'
+EXPERIMENT = 'depeval_99'
 N_SAMPLES = 100
 
 if __name__ == '__main__':
@@ -44,4 +44,6 @@ if __name__ == '__main__':
     '''
     plt.figure()
     plt.imshow(conf_matrix)
+    plt.colorbar()
+    plt.title('Confusion matrix')
     plt.show()
