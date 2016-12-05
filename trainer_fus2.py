@@ -163,12 +163,12 @@ def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag='fus'):
             common.writer('  Training data eval:', (), logfile)
             do_eval(
                 sess, prob, eval_correct, rgb_ph, dep_ph, labels_ph, keep_prob_ph, 
-                rgb_train_feat, dep_train_feat, train_labels, logfile, 'fus', step)
+                rgb_train_feat, dep_train_feat, train_labels, logfile, 'fustrain', step)
 
             common.writer('  Validation data eval:', (), logfile)
             precision = do_eval(
                 sess, prob, eval_correct, rgb_ph, dep_ph, labels_ph, keep_prob_ph,
-                rgb_eval_feat, dep_eval_feat, eval_labels, logfile, 'fus', step)
+                rgb_eval_feat, dep_eval_feat, eval_labels, logfile, 'fuseval', step)
             common.writer('Precision: %.4f', precision, logfile)
 
             if precision > best_precision: # backup best model so far
