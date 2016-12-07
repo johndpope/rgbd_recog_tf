@@ -1,28 +1,35 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import configure as cfg
-import os, ipdb
+import sys, os, ipdb
 from sklearn.metrics import confusion_matrix
 
 
-EXPERIMENT = 'depeval_99'
-N_SAMPLES = 100
+EXPERIMENT = 'fuseval_299'
 
-if __name__ == '__main__':
+def main(pth):
     # load data
-    pth = os.path.join(cfg.DIR_PROB, EXPERIMENT+'.txt')
+    #pth = os.path.join(cfg.DIR_PROB, EXPERIMENT+'.txt')
     data = np.loadtxt(pth)
     N = len(data)
-    prob = data[:,:51]
-    y_pred = data[:,51].astype(np.int32)
-    y_true = data[:,52].astype(np.int32)
+    n_classes = len(cfg.CLASSES)
+    score = data[:,:n_classes]
+    y_pred = data[:,n_classes].astype(np.int32)
+    y_true = data[:,n_classes+1].astype(np.int32)
 
-    y_true_arr = np.zeros((N,51))
+    y_true_arr = np.zeros((N,n_classes))
     for i in range(N): 
         y_true_arr[i,y_true[i]] = 1
 
     # analyze
     conf_matrix = confusion_matrix(y_true, y_pred)
+    print 'prediction classes\n', np.unique(y_pred)
+    print 'true classes\n', np.unique(y_true)
+    c=0
+    for i in range(N):
+        if y_true[i]==y_pred[i]:
+            c+=1
+    print 'accuracy:', c*1.0/N
 
     # plot
     '''
@@ -45,5 +52,10 @@ if __name__ == '__main__':
     plt.figure()
     plt.imshow(conf_matrix)
     plt.colorbar()
-    plt.title('Confusion matrix')
+    plt.title('Confusion matrix: '+pth)
+
+
+if __name__ == '__main__':
+    for pth in sys.argv[1:]:
+        main(pth)
     plt.show()

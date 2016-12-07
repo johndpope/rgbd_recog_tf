@@ -6,4 +6,4 @@ summary/*
 checkpoints/*
 bestckpt/*
 results/*
-recogprob/*
+score/*

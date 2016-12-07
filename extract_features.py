@@ -58,17 +58,17 @@ def extract(images, model, prefix, batch_size):
         fc6b = tf.Variable(model[prefix+'fc6b'], trainable=False, name='biases')
         fc6_in = tf.reshape(maxpool5, [batch_size, int(np.prod(maxpool5.get_shape()[1:]))])
         fc6 = tf.nn.relu_layer(fc6_in, fc6W, fc6b, name=scope)
-        fc6_drop = tf.nn.dropout(fc6, keep_prob=1.0, name='drop')
+        #fc6_drop = tf.nn.dropout(fc6, keep_prob=1.0, name='drop')
 
 
     # fc7 layer
     with tf.name_scope(prefix+'fc7') as scope:
         fc7W = tf.Variable(model[prefix+'fc7W'], trainable=False, name='weight')
         fc7b = tf.Variable(model[prefix+'fc7b'], trainable=False, name='biases')
-        fc7 = tf.nn.relu_layer(fc6_drop, fc7W, fc7b, name=scope)
-        fc7_drop = tf.nn.dropout(fc7, keep_prob=1.0, name='drop')
+        fc7 = tf.nn.relu_layer(fc6, fc7W, fc7b, name=scope)
+        #fc7_drop = tf.nn.dropout(fc7, keep_prob=1.0, name='drop')
                 
-    feature = fc7_drop
+    feature = fc7
     return feature
 
 
@@ -105,10 +105,11 @@ if __name__ == '__main__':
     # extract rgb features
     for i in range(0,N,batch_size):
         batch = lst[i:i+batch_size]
-        rgb,_ = common.load_images(batch, cfg.DIR_DATA_MASKED, cfg.EXT_RGB, cfg.CLASSES)
-        dep,_ = common.load_images(batch, cfg.DIR_DATA_MASKED, cfg.EXT_RGB, cfg.CLASSES)
-        rgb_feat = sess.run(rgb_extractor, feed_dict={img_ph:common.random_crop(rgb)})
-        dep_feat = sess.run(dep_extractor, feed_dict={img_ph:common.random_crop(dep)})
+        #rgb,_ = common.load_images(batch, cfg.DIR_DATA_MASKED, cfg.EXT_RGB, cfg.CLASSES, crop='random')
+        #dep,_ = common.load_images(batch, cfg.DIR_DATA_MASKED, cfg.EXT_RGB, cfg.CLASSES, crop='random')
+        rgb,dep,_ = common.load_pairs(batch, cfg.DIR_DATA_MASKED, cfg.CLASSES, crop='random')
+        rgb_feat = sess.run(rgb_extractor, feed_dict={img_ph:rgb})
+        dep_feat = sess.run(dep_extractor, feed_dict={img_ph:dep})
 
         for item in batch:
             foo,bar = os.path.split(item)

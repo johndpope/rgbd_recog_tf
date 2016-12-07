@@ -8,11 +8,11 @@ from architectures import model_single_channel as model
 
 # model parameters
 FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_integer('max_iter', 100, """Maximum number of training iteration.""")
+tf.app.flags.DEFINE_integer('max_iter', 30, """Maximum number of training iteration.""")
 tf.app.flags.DEFINE_integer('batch_size', 400, """Numer of images to process in a batch.""")
 tf.app.flags.DEFINE_integer('img_s', cfg.IMG_S, """"Size of a square image.""")
 tf.app.flags.DEFINE_integer('img_s_raw', 256, """"Size of a square image.""")
-tf.app.flags.DEFINE_integer('n_classes', 51, """Number of classes.""")
+tf.app.flags.DEFINE_integer('n_classes', len(cfg.CLASSES), """Number of classes.""")
 tf.app.flags.DEFINE_float('learning_rate', 1e-3, """"Learning rate for training models.""")
 tf.app.flags.DEFINE_integer('summary_frequency', 1, """How often to write summary.""")
 tf.app.flags.DEFINE_integer('checkpoint_frequency', 3, """How often to evaluate and write checkpoint.""")
@@ -58,18 +58,18 @@ def fill_feed_dict(img_batch, lbl_batch, images_ph, labels_ph, keep_prob_ph, is_
         lbl_batch = np.pad(lbl_batch, ((0,M),(0,0)), 'constant', constant_values=0)
 
     if is_training:
-        feed_dict = {images_ph: common.random_crop(img_batch, rand_fl=False), labels_ph: lbl_batch, keep_prob_ph: 0.5}
+        feed_dict = {images_ph: img_batch, labels_ph: lbl_batch, keep_prob_ph: 0.5}
     else:
-        feed_dict = {images_ph: common.central_crop(img_batch), labels_ph: lbl_batch, keep_prob_ph: 1.0}
+        feed_dict = {images_ph: img_batch, labels_ph: lbl_batch, keep_prob_ph: 1.0}
     return feed_dict
 
 
-def do_eval(sess, prob, eval_correct, images_ph, labels_ph, keep_prob_ph, all_data, all_labels, logfile, tag, step):
+def do_eval(sess, score, eval_correct, images_ph, labels_ph, keep_prob_ph, all_data, all_labels, logfile, tag, step):
     ''' Run one evaluation against the full epoch of data
 
     Args:
         sess: the session in which the model has been trained
-        prob: probability operator
+        score: model inference operator
         eval_correct: the tensor that returns the number of correct predictions
         images_ph: tensor place holder for images
         labels_ph: tensor place holder for labels
@@ -92,8 +92,8 @@ def do_eval(sess, prob, eval_correct, images_ph, labels_ph, keep_prob_ph, all_da
             all_data[batch_idx], all_labels[batch_idx], 
             images_ph, labels_ph, keep_prob_ph, 
             is_training=False)
-        prob_val = sess.run(prob, feed_dict=fd)
-        common.write_prob(prob_val, all_labels[batch_idx], tag, step)
+        score_val = sess.run(score, feed_dict=fd)
+        common.write_score(score_val, all_labels[batch_idx], tag, step)
         true_count += sess.run(eval_correct, feed_dict=fd)
         start_idx = stop_idx
 
@@ -119,20 +119,22 @@ def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag):
     #train_lst = train_lst[:10]; eval_lst=eval_lst[:10] #TODO
 
     print 'Loading training data...'
-    train_data, train_labels = common.load_images(train_lst, train_dir, ext, cfg.CLASSES)
+    train_data, train_labels = common.load_images(
+            train_lst, train_dir, ext, cfg.CLASSES, crop='random')
     num_train = len(train_data)
 
     print 'Loading validation data...'
-    eval_data, eval_labels = common.load_images(eval_lst, eval_dir, ext, cfg.CLASSES)
+    eval_data, eval_labels = common.load_images(
+            eval_lst, eval_dir, ext, cfg.CLASSES, crop='central')
 
     # tensorflow variables and operations
     print 'Preparing tensorflow...'
     images_ph, labels_ph, keep_prob_ph = placeholder_inputs(FLAGS.batch_size)
 
-    prob = model.inference(images_ph, net_data, keep_prob_ph, tag)
-    loss = model.loss(prob, labels_ph, tag)
+    score = model.inference(images_ph, net_data, keep_prob_ph, tag)
+    loss = model.loss(score, labels_ph, tag)
     train_op = model.training(loss)
-    eval_correct = model.evaluation(prob, labels_ph)
+    eval_correct = model.evaluation(score, labels_ph)
     init_op = tf.initialize_all_variables()
 
     # tensorflow monitor
@@ -146,7 +148,7 @@ def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag):
 
 
     # start the training loop
-    old_loss, best_precision = sys.maxsize, 0
+    old_loss, best_loss, best_precision = sys.maxsize, sys.maxsize, 0
     patience_count = 0
     print 'Start the training loop...'
     for step in range(FLAGS.max_iter):
@@ -191,20 +193,21 @@ def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag):
 
 
         # write checkpoint---------------------------------------------
-        if step % FLAGS.checkpoint_frequency == 0 or (step+1) == FLAGS.max_iter:
+        if step % FLAGS.checkpoint_frequency == 0 or (step+1) == FLAGS.max_iter:# or total_loss<best_loss:
             checkpoint_file = os.path.join(cfg.DIR_CKPT, tag)
             saver.save(sess, checkpoint_file, global_step=step)
+            #if total_loss<best_loss: best_lost = total_loss
             
             common.writer('  Training data eval:', (), logfile)
             do_eval(
-                sess, prob, eval_correct, 
+                sess, score, eval_correct, 
                 images_ph, labels_ph, keep_prob_ph, 
                 train_data, train_labels, 
                 logfile, tag+'train', step)
 
             common.writer('  Validation data eval:', (), logfile)
             precision = do_eval(
-                sess, prob, eval_correct, 
+                sess, score, eval_correct, 
                 images_ph, labels_ph, keep_prob_ph, 
                 eval_data, eval_labels, 
                 logfile, tag+'eval', step)
@@ -226,6 +229,7 @@ def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag):
         if to_stop: 
             common.writer('Early stopping...', (), logfile)
             break
+    common.writer('Best precision: %.4f', best_precision, logfile)
     logfile.close()
     return
 

@@ -8,13 +8,13 @@ from architectures import model_fusion2 as model
 
 # model parameters
 FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_integer('max_iter', 200, """Maximum number of training iteration.""")
+tf.app.flags.DEFINE_integer('max_iter', 300, """Maximum number of training iteration.""")
 tf.app.flags.DEFINE_integer('batch_size', 400, """Numer of images to process in a batch.""")
 tf.app.flags.DEFINE_integer('img_s', cfg.IMG_S, """"Size of a square image.""")
-tf.app.flags.DEFINE_integer('n_classes', 51, """Number of classes.""")
-tf.app.flags.DEFINE_float('learning_rate', 1e-3, """"Learning rate for training models.""")
+tf.app.flags.DEFINE_integer('n_classes', len(cfg.CLASSES), """Number of classes.""")
+tf.app.flags.DEFINE_float('learning_rate', 1e-5, """"Learning rate for training models.""")
 tf.app.flags.DEFINE_integer('summary_frequency', 1, """How often to write summary.""")
-tf.app.flags.DEFINE_integer('checkpoint_frequency', 3, """How often to evaluate and write checkpoint.""")
+tf.app.flags.DEFINE_integer('checkpoint_frequency', 5, """How often to evaluate and write checkpoint.""")
 
 #=================================================================================================
 def placeholder_inputs(batch_size):
@@ -39,7 +39,7 @@ def fill_feed_dict(rgb_batch, dep_batch, lbl_batch, rgb_ph, dep_ph, labels_ph, k
     return feed_dict
 
 
-def do_eval(sess, prob, eval_correct, rgb_ph, dep_ph, labels_ph, keep_prob_ph, all_rgb, all_dep, all_labels, logfile, tag, step):
+def do_eval(sess, score, eval_correct, rgb_ph, dep_ph, labels_ph, keep_prob_ph, all_rgb, all_dep, all_labels, logfile, tag, step):
     true_count, start_idx = 0, 0
     num_samples = all_labels.shape[0]
     indices = np.arange(num_samples)
@@ -51,14 +51,24 @@ def do_eval(sess, prob, eval_correct, rgb_ph, dep_ph, labels_ph, keep_prob_ph, a
             all_rgb[batch_idx], all_dep[batch_idx], all_labels[batch_idx],
             rgb_ph, dep_ph, labels_ph, keep_prob_ph,
             is_training=False)
-        prob_val = sess.run(prob, feed_dict=fd)
-        common.write_prob(prob_val, all_labels[batch_idx], tag, step)
+        score_val = sess.run(score, feed_dict=fd)
+        common.write_score(score_val, all_labels[batch_idx], tag, step)
         true_count += sess.run(eval_correct, feed_dict=fd)
         start_idx = stop_idx
         
     precision = true_count*1.0 / num_samples
-    common.writer('    Num-samples:%d   Num-correct:%d   Precision:%0.04f', (num_samples, true_count, precision), logfile)
+    common.writer('    Num-samples:%d   Num-correct:%d   Precision:%0.04f', 
+            (num_samples, true_count, precision), logfile)
     return precision
+
+
+def select_class(lst):
+    new_lst = []
+    for item in lst:
+        for foo in cfg.CLASSES:
+            if foo in item:
+                new_lst.append(item)
+    return new_lst
 
 
 #=================================================================================================
@@ -71,20 +81,23 @@ def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag='fus'):
     dep_model = np.load(cfg.PTH_DEP_MODEL).item()
 
     print 'Loading lists...'
-    with open(pth_train_lst, 'r') as f: train_lst = f.read().splitlines()
-    with open(pth_eval_lst,  'r') as f: eval_lst  = f.read().splitlines()
+    train_lst = open(pth_train_lst, 'r').read().splitlines()
+    eval_lst = open(pth_eval_lst, 'r').read().splitlines()
+    #train_lst = select_class(train_lst); eval_lst = select_class(eval_lst)
     #train_lst = train_lst[:10]; eval_lst = eval_lst[:10] #TODO
 
     print 'Loading training features...'
-    rgb_train_feat, train_labels = common.load_feat(train_lst, cfg.DIR_DATA_MASKED_FEAT, cfg.EXT_RGB_FEAT, cfg.CLASSES)
-    dep_train_feat, _ = common.load_feat(train_lst, cfg.DIR_DATA_MASKED_FEAT, cfg.EXT_D_FEAT, cfg.CLASSES)
+    rgb_train_feat, train_labels = common.load_feat(
+            train_lst, cfg.DIR_DATA_MASKED_FEAT, cfg.EXT_RGB_FEAT, cfg.CLASSES)
+    dep_train_feat, _ = common.load_feat(
+            train_lst, cfg.DIR_DATA_MASKED_FEAT, cfg.EXT_D_FEAT, cfg.CLASSES)
     num_train = len(train_lst)
 
     print 'Loading validation data...'
-    rgb_eval_data, eval_labels = common.load_images(eval_lst, eval_dir, cfg.EXT_RGB, cfg.CLASSES)
-    dep_eval_data, _           = common.load_images(eval_lst, eval_dir, cfg.EXT_D, cfg.CLASSES)
-    rgb_eval_data = common.central_crop(rgb_eval_data)
-    dep_eval_data = common.central_crop(rgb_eval_data)
+    rgb_eval_data, eval_labels = common.load_images(
+            eval_lst, eval_dir, cfg.EXT_RGB, cfg.CLASSES, crop='central')
+    dep_eval_data, _= common.load_images(
+            eval_lst, eval_dir, cfg.EXT_D, cfg.CLASSES, crop='central')
     import extract_features
     rgb_eval_feat = extract_features.caller(rgb_eval_data, rgb_model, 'rgb')
     dep_eval_feat = extract_features.caller(dep_eval_data, dep_model, 'dep')
@@ -96,10 +109,10 @@ def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag='fus'):
     print 'Preparing tensorflow...'
     rgb_ph, dep_ph, labels_ph, keep_prob_ph = placeholder_inputs(FLAGS.batch_size)
 
-    prob = model.inference(rgb_ph, dep_ph, keep_prob_ph)
-    loss = model.loss(prob, labels_ph, rgb_model, dep_model)
+    score = model.inference(rgb_ph, dep_ph, keep_prob_ph)
+    loss = model.loss(score, labels_ph)
     train_op = model.training(loss)
-    eval_correct = model.evaluation(prob, labels_ph)
+    eval_correct = model.evaluation(score, labels_ph)
     init_op = tf.initialize_all_variables()
 
     # tensorflow monitor
@@ -156,18 +169,19 @@ def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag='fus'):
 
 
         # write checkpoint------------------------------------------------------
-        if step % FLAGS.checkpoint_frequency == 0 or (step+1) == FLAGS.max_iter:
+        if step % FLAGS.checkpoint_frequency == 0 or (step+1) == FLAGS.max_iter or best_loss<total_loss:
             checkpoint_file = os.path.join(cfg.DIR_CKPT, tag)
             saver.save(sess, checkpoint_file, global_step=step)
+            if total_loss<best_loss: best_loss = total_loss
 
             common.writer('  Training data eval:', (), logfile)
             do_eval(
-                sess, prob, eval_correct, rgb_ph, dep_ph, labels_ph, keep_prob_ph, 
+                sess, score, eval_correct, rgb_ph, dep_ph, labels_ph, keep_prob_ph, 
                 rgb_train_feat, dep_train_feat, train_labels, logfile, 'fustrain', step)
 
             common.writer('  Validation data eval:', (), logfile)
             precision = do_eval(
-                sess, prob, eval_correct, rgb_ph, dep_ph, labels_ph, keep_prob_ph,
+                sess, score, eval_correct, rgb_ph, dep_ph, labels_ph, keep_prob_ph,
                 rgb_eval_feat, dep_eval_feat, eval_labels, logfile, 'fuseval', step)
             common.writer('Precision: %.4f', precision, logfile)
 
@@ -181,12 +195,15 @@ def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag='fus'):
                 best_precision = precision
 
         # early stopping-------------------------------------------------------
+        '''
         to_stop, patience_count = common.early_stopping(\
-                old_loss, total_loss, patience_count)
+                old_loss, total_loss, patience_count, patience_limit=10)
         old_loss = total_loss
         if to_stop:
             common.writer('Early stopping...', (), logfile)
             break
+        '''
+    common.writer('Best precision: %.4f', best_precision, logfile)
     logfile.close()
     return
 

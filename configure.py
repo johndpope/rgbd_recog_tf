@@ -8,7 +8,7 @@ DIR_MODEL       = 'models'
 DIR_SUMMARY     = 'summary'
 DIR_LOG         = 'logs'
 DIR_BESTCKPT    = 'bestckpt'
-DIR_PROB        = 'recogprob'
+DIR_SCORE       = 'score'
 
 DIR_DATA_RAW      = os.path.join(DIR_HOME, 'data', 'rgbd-dataset')
 DIR_DATA          = os.path.join(DIR_HOME, 'data', 'rgbd-dataset-processed')
@@ -17,7 +17,7 @@ DIR_DATA_4D       = os.path.join(DIR_HOME, 'data', 'rgbd-dataset-processed4d')
 DIR_DATA_EVAL_RAW = os.path.join(DIR_HOME, 'data', 'rgbd-dataset_eval')
 DIR_DATA_EVAL     = os.path.join(DIR_HOME, 'data', 'rgbd-dataset_eval-processed')
 
-DIR_DATA_MASKED_FEAT = os.path.join(DIR_HOME, 'data', 'rgbd-dataset-feat-masked')
+DIR_DATA_MASKED_FEAT = os.path.join(DIR_HOME, 'data', 'rgbd-feat-masked')
 
 DIR_DATA_AUX      = os.path.join(DIR_HOME, 'data', 'rgbd-aux')
 if not os.path.exists(DIR_DATA_AUX): os.makedirs(DIR_DATA_AUX)

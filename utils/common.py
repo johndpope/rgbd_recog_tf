@@ -21,18 +21,18 @@ def writer(msg, params, f):
     return
 
 
-def write_prob(prob, labels, tag, step):
-    f = open(os.path.join(cfg.DIR_PROB, tag+'_'+str(step)+'.txt'), 'a')
+def write_score(score, labels, tag, step):
+    f = open(os.path.join(cfg.DIR_SCORE, tag+'_'+str(step)+'.txt'), 'a')
     N = len(labels)
     for i in range(N):
-        line = prob[i]
+        line = score[i]
         for j in line: f.write('%f ' % j)
         f.write('%d %d\n' % (np.argmax(line), np.argmax(labels[i])))
     f.close()
     return
 
 
-#batch manager-------------------------------------------------------------------------------------------
+#batch manager------------------------------------------------------------------------------------
 def next_batch(indices, start_idx, batch_size):
     N = indices.shape[0]
     if start_idx+batch_size > N:
@@ -55,18 +55,18 @@ def early_stopping(old_val, new_val, patience_count, tolerance=1e-2, patience_li
     return to_stop, patience_count
 
 
-#data loader----------------------------------------------------------------------------------------------
+#data loader--------------------------------------------------------------------------------------
 def parse_label(x, classes):
     return classes.index(x.split('/')[0])
 
 
-def load_images(lst, data_dir, ext, classes, IMG_S=256):
+def load_images(lst, data_dir, ext, classes, crop):
     # load mean img
     mean_img = np.load(cfg.PTH_MEAN_IMG)
     mean_img = mean_img.transpose(1,2,0)
 
     N = len(lst)
-    images = np.zeros((N,IMG_S,IMG_S,3), dtype=np.uint8)
+    images = np.zeros((N,cfg.IMG_S,cfg.IMG_S,3), dtype=np.uint8)
     labels = np.zeros((N,len(classes)), dtype=np.float32)
 
     lim = 10
@@ -76,6 +76,12 @@ def load_images(lst, data_dir, ext, classes, IMG_S=256):
 
         # mean removal
         img = img.astype(np.float32) - mean_img.astype(np.float32)
+
+        # crop
+        if crop == 'random':
+            img = random_crop(img)
+        elif crop == 'central':
+            img = central_crop(img)
 
         # add to list
         img = img[np.newaxis, ...]
@@ -89,6 +95,56 @@ def load_images(lst, data_dir, ext, classes, IMG_S=256):
             print '    Loaded %d / %d' % (i, N)
             lim += 10
     return images, labels
+
+
+def load_pairs(lst, data_dir, classes, crop):
+    # load mean img
+    mean_img = np.load(cfg.PTH_MEAN_IMG)
+    mean_img = mean_img.transpose(1,2,0)
+
+    N = len(lst)
+    all_rgb = np.zeros((N,cfg.IMG_S,cfg.IMG_S,3), dtype=np.uint8)
+    all_dep = np.zeros((N,cfg.IMG_S,cfg.IMG_S,3), dtype=np.uint8)
+    labels = np.zeros((N,len(classes)), dtype=np.float32)
+
+    lim = 10
+    for i in range(N):
+        # read image
+        rgb = cv2.imread(os.path.join(data_dir, lst[i]+cfg.EXT_RGB))
+        dep = cv2.imread(os.path.join(data_dir, lst[i]+cfg.EXT_D))
+
+        # mean removal
+        rgb = rgb.astype(np.float32) - mean_img.astype(np.float32)
+        dep = dep.astype(np.float32) - mean_img.astype(np.float32)
+
+        # crop
+        if crop == 'random':
+            old_size = rgb.shape[1]
+            new_size = cfg.IMG_S
+            r = old_size - new_size
+            u = np.random.randint(r+1)
+            v = np.random.randint(r+1)
+            # crop rgb and d with the same random top-left position
+            rgb = rgb[u:new_size+u, v:new_size+v, :]
+            dep = dep[u:new_size+u, v:new_size+v, :]
+        elif crop == 'central':
+            rgb = central_crop(rgb)
+            dep = central_crop(dep)
+
+        # add to list
+        rgb = rgb[np.newaxis, ...]
+        dep = dep[np.newaxis, ...]
+        all_rgb[i] = rgb
+        all_dep[i] = dep
+
+        # parse label
+        labels[i, parse_label(lst[i], classes)] = 1.0
+        
+        percent = int(100.0*i/N)
+        if percent == lim:
+            print '    Loaded %d / %d' % (i, N)
+            lim += 10
+    return all_rgb, all_dep, labels
 
 
 def load_feat(lst, data_dir, ext, classes):
@@ -143,7 +199,7 @@ def load_4d(lst, rgb_dir, dep_dir, process_dep=False):
     return rgbds, labels
 
 
-#image helpers-----------------------------------------------------------------------------------------
+#image helpers------------------------------------------------------------------------------------
 def random_crop(images, rand_fl=False):
     """ Randomly crop the whole batch of image with the same mask
     """
@@ -152,7 +208,7 @@ def random_crop(images, rand_fl=False):
     r = old_size - new_size
     u = np.random.randint(r+1)
     v = np.random.randint(r+1)
-    images = images[:, u:new_size+u, v:new_size+v, :]
+    images = images[u:new_size+u, v:new_size+v, :]
     if rand_fl:
         return random_flip(images)
     return images
@@ -162,7 +218,7 @@ def central_crop(images):
     old_size = images.shape[1]
     new_size = cfg.IMG_S
     r = (old_size-new_size)/2
-    images = images[:, r:new_size+r, r:new_size+r, :]
+    images = images[r:new_size+r, r:new_size+r, :]
     return images
 
 

@@ -115,11 +115,11 @@ def inference(images, net_data, keep_prob, tag=''):
 
     # prob
     ## softmax(name='prob')
-    prob = tf.nn.softmax(fc8, name='prob')
-    return prob
+    #prob = tf.nn.softmax(fc8, name='prob')
+    return fc8
 
 
-def loss(prob, labels, tag):
+def loss(score, labels, tag):
     """Return the loss as categorical cross-entropy
 
     Args:
@@ -133,9 +133,12 @@ def loss(prob, labels, tag):
     #L = -tf.reduce_sum(labels * tf.log(logits), reduction_indices=1)
     #loss = tf.reduce_sum(L, reduction_indices=0, name='loss')
 
+
+    prob = tf.nn.softmax(score, name='prob')
     logits = tf.log(tf.clip_by_value(prob, 1e-10, 1.0), name='logits')
     L = -tf.reduce_sum(labels * logits, reduction_indices=1)
     loss = tf.reduce_sum(L, reduction_indices=0, name='loss')
+    #loss = tf.reduce_sum(tf.nn.softmax_cross_entropy_with_logits(score, labels), name='loss')
 
     # regularize weights
     '''
