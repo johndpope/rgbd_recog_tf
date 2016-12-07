@@ -43,14 +43,13 @@ def loss(score, labels, tag='fus'):
 
         return w_l2 #+ b_l2
 
-    '''
     tag += '_'
+    prob = tf.nn.softmax(score, name='prob')
     logits = tf.log(tf.clip_by_value(prob, 1e-10, 1.0), name='logits')
     L = -tf.reduce_sum(labels * logits, reduction_indices=1)
     loss = tf.reduce_sum(L, reduction_indices=0, name='loss')
-    '''
 
-    loss = tf.reduce_sum(tf.nn.softmax_cross_entropy_with_logits(score, labels), name='loss')
+    #loss = tf.reduce_sum(tf.nn.softmax_cross_entropy_with_logits(score, labels), name='loss')
 
     # regularize weights
     regularizers1, regularizers2 = 0,0
@@ -64,6 +63,6 @@ def loss(score, labels, tag='fus'):
     regularizers2 = _get_partial_regularizer('fus_fc1_fus',[4096*2,4096]) + \
             _get_partial_regularizer('fus_class', [4096,FLAGS.n_classes])
     #loss += 1e-4 * (regularizers1 + regularizers2)
-    loss += 1e-4 * regularizers2
+    loss += 1e-3 * regularizers2
     return loss
 

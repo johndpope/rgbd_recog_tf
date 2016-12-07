@@ -23,13 +23,20 @@ def main(pth):
 
     # analyze
     conf_matrix = confusion_matrix(y_true, y_pred)
-    print 'prediction classes\n', np.unique(y_pred)
-    print 'true classes\n', np.unique(y_true)
-    c=0
+    print 'Prediction classes\n', np.unique(y_pred)
+    print 'True classes\n', np.unique(y_true)
+
+    t1=0
     for i in range(N):
-        if y_true[i]==y_pred[i]:
-            c+=1
-    print 'accuracy:', c*1.0/N
+        if y_true[i]==y_pred[i]: t1+=1
+    print 'Top1 accuracy:', t1*1.0/N
+
+
+    t5=0
+    for i in range(N):
+        foo = score[i]
+        if y_true[i] in foo.argsort()[-5:][::-1]: t5+=1
+    print 'Top5 accuracy:', t5*1.0/N
 
     # plot
     '''

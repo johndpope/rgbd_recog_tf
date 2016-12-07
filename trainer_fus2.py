@@ -14,7 +14,7 @@ tf.app.flags.DEFINE_integer('img_s', cfg.IMG_S, """"Size of a square image.""")
 tf.app.flags.DEFINE_integer('n_classes', len(cfg.CLASSES), """Number of classes.""")
 tf.app.flags.DEFINE_float('learning_rate', 1e-5, """"Learning rate for training models.""")
 tf.app.flags.DEFINE_integer('summary_frequency', 1, """How often to write summary.""")
-tf.app.flags.DEFINE_integer('checkpoint_frequency', 5, """How often to evaluate and write checkpoint.""")
+tf.app.flags.DEFINE_integer('checkpoint_frequency', 3, """How often to evaluate and write checkpoint.""")
 
 #=================================================================================================
 def placeholder_inputs(batch_size):
@@ -169,10 +169,10 @@ def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag='fus'):
 
 
         # write checkpoint------------------------------------------------------
-        if step % FLAGS.checkpoint_frequency == 0 or (step+1) == FLAGS.max_iter or best_loss<total_loss:
+        if step % FLAGS.checkpoint_frequency == 0 or (step+1) == FLAGS.max_iter: #or best_loss<total_loss:
             checkpoint_file = os.path.join(cfg.DIR_CKPT, tag)
             saver.save(sess, checkpoint_file, global_step=step)
-            if total_loss<best_loss: best_loss = total_loss
+            #if total_loss<best_loss: best_loss = total_loss
 
             common.writer('  Training data eval:', (), logfile)
             do_eval(
@@ -213,8 +213,8 @@ def main(argv=None):
     trial = 0
     print 'Trial: %d' % trial
 
-    #pth_train_lst = cfg.PTH_TRAIN_LST[trial]
-    pth_train_lst = cfg.PTH_TRAIN_SHORT_LST[trial]
+    pth_train_lst = cfg.PTH_TRAIN_LST[trial]
+    #pth_train_lst = cfg.PTH_TRAIN_SHORT_LST[trial]
     pth_eval_lst  = cfg.PTH_EVAL_LST[trial]
     train_dir = cfg.DIR_DATA_MASKED
     eval_dir  = cfg.DIR_DATA_EVAL
