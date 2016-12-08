@@ -8,7 +8,7 @@ from architectures import model_single_channel as model
 
 # model parameters
 FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_integer('max_iter', 30, """Maximum number of training iteration.""")
+tf.app.flags.DEFINE_integer('max_iter', 100, """Maximum number of training iteration.""")
 tf.app.flags.DEFINE_integer('batch_size', 400, """Numer of images to process in a batch.""")
 tf.app.flags.DEFINE_integer('img_s', cfg.IMG_S, """"Size of a square image.""")
 tf.app.flags.DEFINE_integer('img_s_raw', 256, """"Size of a square image.""")
@@ -16,6 +16,7 @@ tf.app.flags.DEFINE_integer('n_classes', len(cfg.CLASSES), """Number of classes.
 tf.app.flags.DEFINE_float('learning_rate', 1e-3, """"Learning rate for training models.""")
 tf.app.flags.DEFINE_integer('summary_frequency', 1, """How often to write summary.""")
 tf.app.flags.DEFINE_integer('checkpoint_frequency', 3, """How often to evaluate and write checkpoint.""")
+tf.app.flags.DEFINE_integer('rerandomize', 10, """How often to rerandomize data.""")
 
 
 #=========================================================================================
@@ -223,6 +224,13 @@ def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag):
                 shutil.copyfile(src, dst)
                 '''
                 best_precision = precision
+
+        # rerandomize training data------------------------------------
+        if step % FLAGS.rerandomize == 0:
+            print "Rerandomize data"
+            del train_data; del train_labels
+            train_data, train_labels = common.load_images(
+                    train_lst, train_dir, ext, cfg.CLASSES, crop='random')
 
         # early stopping-----------------------------------------------
         to_stop, patience_count = common.early_stopping(\
