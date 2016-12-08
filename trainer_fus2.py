@@ -117,7 +117,7 @@ def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag='fus'):
 
     # tensorflow monitor
     summary = tf.merge_all_summaries()
-    saver = tf.train.Saver()
+    saver = tf.train.Saver(max_to_keep=1000)
 
     # initialize graph
     sess = tf.Session()
@@ -185,13 +185,15 @@ def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag='fus'):
                 rgb_eval_feat, dep_eval_feat, eval_labels, logfile, 'fuseval', step)
             common.writer('Precision: %.4f', precision, logfile)
 
-            if precision > best_precision: # backup best model so far
+            if precision > best_precision: 
+                '''
                 src = os.path.join(cfg.DIR_CKPT,tag+'-'+str(step))
                 dst = os.path.join(cfg.DIR_BESTCKPT,tag+'-best')
                 shutil.copyfile(src, dst)
                 src = os.path.join(cfg.DIR_CKPT,tag+'-'+str(step)+'.meta')
                 dst = os.path.join(cfg.DIR_BESTCKPT,tag+'-best.meta')
                 shutil.copyfile(src, dst)
+                '''
                 best_precision = precision
 
         # early stopping-------------------------------------------------------
@@ -213,8 +215,8 @@ def main(argv=None):
     trial = 0
     print 'Trial: %d' % trial
 
-    pth_train_lst = cfg.PTH_TRAIN_LST[trial]
-    #pth_train_lst = cfg.PTH_TRAIN_SHORT_LST[trial]
+    #pth_train_lst = cfg.PTH_TRAIN_LST[trial]
+    pth_train_lst = cfg.PTH_TRAIN_SHORT_LST[trial]
     pth_eval_lst  = cfg.PTH_EVAL_LST[trial]
     train_dir = cfg.DIR_DATA_MASKED
     eval_dir  = cfg.DIR_DATA_EVAL

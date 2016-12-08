@@ -63,6 +63,6 @@ def loss(score, labels, tag='fus'):
     regularizers2 = _get_partial_regularizer('fus_fc1_fus',[4096*2,4096]) + \
             _get_partial_regularizer('fus_class', [4096,FLAGS.n_classes])
     #loss += 1e-4 * (regularizers1 + regularizers2)
-    loss += 1e-3 * regularizers2
+    loss += 1e-4 * regularizers2
     return loss
 
