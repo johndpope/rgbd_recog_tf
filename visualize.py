@@ -26,17 +26,25 @@ def main(pth):
     print 'Prediction classes\n', np.unique(y_pred)
     print 'True classes\n', np.unique(y_true)
 
+    for t in range(5):
+        count = 0
+        for i in range(N):
+            foo = score[i]
+            if y_true[i] in foo.argsort()[-(t+1):][::-1]: count+=1
+        print 'Top', t+1, 'results:', count*1.0/N
+    '''
     t1=0
     for i in range(N):
         if y_true[i]==y_pred[i]: t1+=1
-    print 'Top1 accuracy:', t1*1.0/N
+    print 'Top 1 accuracy:', t1*1.0/N
 
 
     t5=0
     for i in range(N):
         foo = score[i]
         if y_true[i] in foo.argsort()[-5:][::-1]: t5+=1
-    print 'Top5 accuracy:', t5*1.0/N
+    print 'Top 5 accuracy:', t5*1.0/N
+    '''
 
     # plot
     '''

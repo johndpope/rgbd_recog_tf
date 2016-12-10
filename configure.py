@@ -17,7 +17,8 @@ DIR_DATA_4D       = os.path.join(DIR_HOME, 'data', 'rgbd-dataset-processed4d')
 DIR_DATA_EVAL_RAW = os.path.join(DIR_HOME, 'data', 'rgbd-dataset_eval')
 DIR_DATA_EVAL     = os.path.join(DIR_HOME, 'data', 'rgbd-dataset_eval-processed')
 
-DIR_DATA_MASKED_FEAT = os.path.join(DIR_HOME, 'data', 'rgbd-feat-masked')
+N_FEAT_RAND = 5
+DIR_DATA_MASKED_FEAT = [os.path.join(DIR_HOME, 'data', 'rgbd-feat-masked-'+str(i+1)) for i in range(N_FEAT_RAND)]
 
 DIR_DATA_AUX      = os.path.join(DIR_HOME, 'data', 'rgbd-aux')
 if not os.path.exists(DIR_DATA_AUX): os.makedirs(DIR_DATA_AUX)

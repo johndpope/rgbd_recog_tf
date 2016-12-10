@@ -105,8 +105,6 @@ if __name__ == '__main__':
     # extract rgb features
     for i in range(0,N,batch_size):
         batch = lst[i:i+batch_size]
-        #rgb,_ = common.load_images(batch, cfg.DIR_DATA_MASKED, cfg.EXT_RGB, cfg.CLASSES, crop='random')
-        #dep,_ = common.load_images(batch, cfg.DIR_DATA_MASKED, cfg.EXT_RGB, cfg.CLASSES, crop='random')
         rgb,dep,_ = common.load_pairs(batch, cfg.DIR_DATA_MASKED, cfg.CLASSES, crop='random')
         rgb_feat = sess.run(rgb_extractor, feed_dict={img_ph:rgb})
         dep_feat = sess.run(dep_extractor, feed_dict={img_ph:dep})

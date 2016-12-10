@@ -15,6 +15,7 @@ tf.app.flags.DEFINE_integer('n_classes', len(cfg.CLASSES), """Number of classes.
 tf.app.flags.DEFINE_float('learning_rate', 1e-5, """"Learning rate for training models.""")
 tf.app.flags.DEFINE_integer('summary_frequency', 1, """How often to write summary.""")
 tf.app.flags.DEFINE_integer('checkpoint_frequency', 3, """How often to evaluate and write checkpoint.""")
+tf.app.flags.DEFINE_integer('rerandomize', 10, """How often to rerandomize data.""")
 
 #=================================================================================================
 def placeholder_inputs(batch_size):
@@ -87,10 +88,11 @@ def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag='fus'):
     #train_lst = train_lst[:10]; eval_lst = eval_lst[:10] #TODO
 
     print 'Loading training features...'
+    feat_type = 0
     rgb_train_feat, train_labels = common.load_feat(
-            train_lst, cfg.DIR_DATA_MASKED_FEAT, cfg.EXT_RGB_FEAT, cfg.CLASSES)
+            train_lst, cfg.DIR_DATA_MASKED_FEAT[feat_type], cfg.EXT_RGB_FEAT, cfg.CLASSES)
     dep_train_feat, _ = common.load_feat(
-            train_lst, cfg.DIR_DATA_MASKED_FEAT, cfg.EXT_D_FEAT, cfg.CLASSES)
+            train_lst, cfg.DIR_DATA_MASKED_FEAT[feat_type], cfg.EXT_D_FEAT, cfg.CLASSES)
     num_train = len(train_lst)
 
     print 'Loading validation data...'
@@ -195,6 +197,17 @@ def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag='fus'):
                 shutil.copyfile(src, dst)
                 '''
                 best_precision = precision
+
+        # rerandomize training data----------------------------------------------
+        if step % FLAGS.rerandomize == 0:
+            print 'Reloading data...'
+            feat_type += 1
+            if feat_type >= cfg.N_FEAT_RAND: feat_type=0
+            del rgb_train_feat; del dep_train_feat; del train_labels
+
+            rgb_train_feat, train_labels = common.load_feat(train_lst, cfg.DIR_DATA_MASKED_FEAT[feat_type], cfg.EXT_RGB_FEAT, cfg.CLASSES)
+            dep_train_feat, _ = common.load_feat(train_lst, cfg.DIR_DATA_MASKED_FEAT[feat_type], cfg.EXT_D_FEAT, cfg.CLASSES)
+
 
         # early stopping-------------------------------------------------------
         '''
