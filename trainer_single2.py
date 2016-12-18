@@ -239,7 +239,7 @@ def run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag):
 
 #=========================================================================================
 def main(argv=None):
-    trial = 2
+    trial = 1
     print 'Trial: %d' % trial
 
     #pth_train_lst = cfg.PTH_TRAIN_LST[trial-1]
@@ -250,8 +250,8 @@ def main(argv=None):
     #train_dir = cfg.DIR_DATA_MASKED
     #eval_dir = cfg.DIR_DATA_EVAL
 
-    #with tf.Graph().as_default():
-    #    run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag='rgb')
+    with tf.Graph().as_default():
+        run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag='rgb')
 
     with tf.Graph().as_default():
         run_training(pth_train_lst, pth_eval_lst, train_dir, eval_dir, tag='dep')

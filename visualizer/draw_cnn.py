@@ -1,7 +1,6 @@
 import tensorflow as tf
 import numpy as np
-import os
-import ipdb
+import os, sys, ipdb
 import matplotlib.pyplot as plt
 
 
@@ -30,11 +29,10 @@ def visualize_weight(weight, title=''):
     return im
 
 
-def main():
+def main(path):
     sess = tf.Session()
 
     # load checkpoint
-    path = os.path.join(ckpt_dir, ckpt_id)
     saver = tf.train.import_meta_graph(path+'.meta')
     saver.restore(sess, path)
     var_lst = tf.trainable_variables()
@@ -82,11 +80,11 @@ def main():
     visualize_weight(model['conv4W'], 'conv4W')
     visualize_weight(model['conv5W'], 'conv5W')
 
+    plt.show()
+
     return
 
 
 if __name__ == '__main__':
     with tf.Graph().as_default():
-        main()
-
-    plt.show()
+        main(sys.argv[1:])

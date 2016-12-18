@@ -130,9 +130,6 @@ def loss(score, labels, tag):
         loss: categorical crossentropy loss
     """
     tag += '_'
-    #L = -tf.reduce_sum(labels * tf.log(logits), reduction_indices=1)
-    #loss = tf.reduce_sum(L, reduction_indices=0, name='loss')
-
 
     prob = tf.nn.softmax(score, name='prob')
     logits = tf.log(tf.clip_by_value(prob, 1e-10, 1.0), name='logits')
@@ -149,6 +146,6 @@ def loss(score, labels, tag):
             weight = tf.get_variable('weight', shapes[i], dtype=tf.float32)
             regularizers += tf.nn.l2_loss(weight)
 
-    #loss += 1e-4*regularizers
+    loss += 1e-4*regularizers
     return loss
 

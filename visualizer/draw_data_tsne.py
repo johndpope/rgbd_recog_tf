@@ -5,13 +5,11 @@ References:
 """
 
 import tensorflow as tf
-from tensorflow.contrib.tensorboard.plugins import projector
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
-import ipdb
+import sys, ipdb
 
-path = '../score/depeval_12.txt' #TODO: test only
 subsampling = 5
 logdir = '.'
 
@@ -33,6 +31,8 @@ def plot_2d(lowDWeights, labels):
 
 
 def plot_3d(lowDWeights, labels):
+    from tensorflow.contrib.tensorboard.plugins import projector
+
     with tf.Graph().as_default():
         # prepare variables and environment
         sess = tf.Session()
@@ -54,10 +54,9 @@ def plot_3d(lowDWeights, labels):
 
 
 if __name__ == '__main__':
+    path = sys.argv[1]
     data = np.loadtxt(path) 
 
-    ipdb.set_trace()
-    
     rpst = data[::subsampling,:51] # representation of network's output
     labels = data[::subsampling,-1]
 
