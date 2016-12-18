@@ -141,16 +141,6 @@ def loss(score, labels, tag):
     #loss = tf.reduce_sum(tf.nn.softmax_cross_entropy_with_logits(score, labels), name='loss')
 
     # regularize weights
-    '''
-    with tf.variable_scope(tag+'fc7'):
-        fc7W = tf.get_variable('weight', [4096,4096], dtype=tf.float32)
-        fc7b = tf.get_variable('biases', [4096], dtype=tf.float32)
-    with tf.variable_scope(tag+'fc8'):
-        fc8W = tf.get_variable('weight', [4096,FLAGS.n_classes], dtype=tf.float32)
-        fc8b = tf.get_variable('biases', [FLAGS.n_classes], dtype=tf.float32)
-
-    regularizers = tf.nn.l2_loss(fc7W) + tf.nn.l2_loss(fc7b) + tf.nn.l2_loss(fc8W) + tf.nn.l2_loss(fc8b)
-    '''
     layers = ['conv1','conv2','conv3','conv4','conv5','fc6','fc7','fc8']
     shapes = [[11,11,3,96],[5,5,48,256],[3,3,256,384],[3,3,192,384],[3,3,192,256],[9216,4096],[4096,4096],[4096,FLAGS.n_classes]]
     regularizers = 0
@@ -159,7 +149,6 @@ def loss(score, labels, tag):
             weight = tf.get_variable('weight', shapes[i], dtype=tf.float32)
             regularizers += tf.nn.l2_loss(weight)
 
-    #loss += 5e-4 * regularizers
-    loss += 1e-4*regularizers
+    #loss += 1e-4*regularizers
     return loss
 

@@ -51,7 +51,7 @@ def training(loss, learning_rate=None):
         learning_rate = FLAGS.learning_rate
 
     # Add a scalar summary for the snapshot loss
-    tf.scalar_summary(loss.op.name, loss)
+    tf.scalar_summary('loss', loss)
 
     # Create the optimizer with given learning rate
     #optimizer = tf.train.AdagradOptimizer(learning_rate)
@@ -76,7 +76,7 @@ def evaluation(score, labels):
         Number of correct classification
     """
     id_labels = tf.argmax(labels, dimension=1) # convert from binary sequences to class id
-    correct = tf.nn.in_top_k(score, id_labels, 1) # TODO: fix k
+    correct = tf.nn.in_top_k(score, id_labels, 1)
 
     # add to summary
     tf.histogram_summary('score', score)

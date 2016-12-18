@@ -49,13 +49,14 @@ CLASSES         = open(PTH_DICT, 'r').read().splitlines()
 # Parameters
 N_TRIALS        = 10
 IMG_S           = 227 # size of a square image
-DEP_MIN         = 0.0
-DEP_MAX         = 4000.0 # because of Kinect
+IMG_RAW_S       = 256
+#DEP_MIN         = 0.0
+#DEP_MAX         = 4000.0 # because of Kinect
 
 # Extensions of RGBD dataset
 EXT_RGB         = '_crop.png'
 EXT_D           = '_depthcrop.png'
 EXT_MASK        = '_maskcrop.png'
-EXT_4D          = '.npy'
+#EXT_4D          = '.npy'
 EXT_RGB_FEAT    = '_crop.npy'
 EXT_D_FEAT      = '_depthcrop.npy'

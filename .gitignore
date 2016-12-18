@@ -4,6 +4,6 @@
 models/*
 summary/*
 checkpoints/*
-bestckpt/*
 results/*
 score/*
+logs/*

@@ -42,9 +42,16 @@ def next_batch(indices, start_idx, batch_size):
     return stop_idx
 
 
-def early_stopping(old_val, new_val, patience_count, tolerance=1e-2, patience_limit=5):
+def early_stopping(old_val, new_val, patience_count, expect_greater, 
+        tolerance=1e-2, patience_limit=5):
     to_stop = False
-    improvement = old_val - new_val
+
+    # good improvement = positive improvement
+    if expect_greater:
+        improvement = new_val - old_val
+    else:
+        improvement = old_val - new_val
+
     if improvement < tolerance:
         if patience_count < patience_limit:
             patience_count += 1
@@ -56,11 +63,7 @@ def early_stopping(old_val, new_val, patience_count, tolerance=1e-2, patience_li
 
 
 #data loader--------------------------------------------------------------------------------------
-def parse_label(x, classes):
-    return classes.index(x.split('/')[0])
-
-
-def load_images(lst, data_dir, ext, classes, crop):
+def preprocess(images):
     # load mean img
     mean_img = np.load(cfg.PTH_MEAN_IMG)
     mean_img = mean_img.transpose(1,2,0)
@@ -70,17 +73,35 @@ def load_images(lst, data_dir, ext, classes, crop):
     labels = np.zeros((N,len(classes)), dtype=np.float32)
 
     lim = 10
+
+    return
+
+
+def load_images(lst, data_dir, ext, ccrop):
+    # load mean img
+    mean_img = np.load(cfg.PTH_MEAN_IMG)
+    mean_img = mean_img.transpose(1,2,0) # mean_img has the shape of (color,width,height)
+
+    N = len(lst)
+    if ccrop == True:
+        images = np.zeros((N,cfg.IMG_S,cfg.IMG_S,3), dtype=np.uint8)
+    else:
+        images = np.zeros((N,cfg.IMG_RAW_S,cfg.IMG_RAW_S,3), dtype=np.uint8)
+    labels = np.zeros((N,len(cfg.CLASSES)), dtype=np.float32)
+
+    lim = 10
     for i in range(N):
         # read image
         img = cv2.imread(os.path.join(data_dir, lst[i]+ext))
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # opencv read data as BGR instead of RGB
+        #FIXME: convert to grayscale
+        #foo = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        #img = np.dstack((foo,foo,foo))
 
         # mean removal
         img = img.astype(np.float32) - mean_img.astype(np.float32)
 
-        # crop
-        if crop == 'random':
-            img = random_crop(img)
-        elif crop == 'central':
+        if ccrop == True:
             img = central_crop(img)
 
         # add to list
@@ -88,7 +109,7 @@ def load_images(lst, data_dir, ext, classes, crop):
         images[i] = img
 
         # parse label
-        labels[i, parse_label(lst[i], classes)] = 1.0
+        labels[i, parse_label(lst[i], cfg.CLASSES)] = 1.0
         
         percent = int(100.0*i/N)
         if percent == lim:
@@ -110,6 +131,7 @@ def load_pairs(lst, data_dir, classes, crop):
     lim = 10
     for i in range(N):
         # read image
+        # FIXME: BGR2RGB
         rgb = cv2.imread(os.path.join(data_dir, lst[i]+cfg.EXT_RGB))
         dep = cv2.imread(os.path.join(data_dir, lst[i]+cfg.EXT_D))
 
@@ -159,6 +181,7 @@ def load_feat(lst, data_dir, ext, classes):
     return features, labels
 
 
+'''
 from preprocess_4d import resize_dep
 def load_4d(lst, rgb_dir, dep_dir, process_dep=False):
     N = len(lst)
@@ -197,10 +220,15 @@ def load_4d(lst, rgb_dir, dep_dir, process_dep=False):
             lim += 10
         
     return rgbds, labels
+'''
 
 
 #image helpers------------------------------------------------------------------------------------
-def random_crop(images, rand_fl=False):
+def parse_label(x, classes):
+    return classes.index(x.split('/')[0])
+
+
+def random_crop(images):
     """ Randomly crop the whole batch of image with the same mask
     """
     old_size = images.shape[1]
@@ -208,9 +236,13 @@ def random_crop(images, rand_fl=False):
     r = old_size - new_size
     u = np.random.randint(r+1)
     v = np.random.randint(r+1)
-    images = images[u:new_size+u, v:new_size+v, :]
-    if rand_fl:
-        return random_flip(images)
+    if images.ndim == 3: # single image
+        images = images[u:new_size+u, v:new_size+v, :]
+    elif images.ndim == 4: # batch of images
+        images = images[:, u:new_size+u, v:new_size+v, :]
+        #N = len(images)
+        #i = np.random.randint(N)
+        #images[i,:,:,:] = images[i,:,::-1,:]
     return images
 
 
@@ -218,7 +250,10 @@ def central_crop(images):
     old_size = images.shape[1]
     new_size = cfg.IMG_S
     r = (old_size-new_size)/2
-    images = images[r:new_size+r, r:new_size+r, :]
+    if images.ndim == 3: # single image
+        images = images[r:new_size+r, r:new_size+r, :]
+    elif images.ndim == 4: # batch of images
+        images = images[:, r:new_size+r, r:new_size+r, :]
     return images
 
 
