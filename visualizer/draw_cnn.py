@@ -4,8 +4,8 @@ import os, sys, ipdb
 import matplotlib.pyplot as plt
 
 
-ckpt_dir = '../checkpoints'
-ckpt_id = 'dep-42'
+#ckpt_dir = '../checkpoints'
+#ckpt_id = 'dep-42'
 
 
 def visualize_weight(weight, title=''):
@@ -87,4 +87,4 @@ def main(path):
 
 if __name__ == '__main__':
     with tf.Graph().as_default():
-        main(sys.argv[1:])
+        main(sys.argv[1])
